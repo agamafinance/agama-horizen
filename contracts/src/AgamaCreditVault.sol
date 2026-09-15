@@ -270,6 +270,14 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
         _transfer(address(this), msg.sender, shares);
     }
 
+    /// @dev Virtual shares at 1e6. The standard ERC-4626 first-depositor attack
+    ///      works by donating assets to a vault holding one share; the offset
+    ///      raises the attacker's cost by six orders of magnitude and caps the
+    ///      victim's loss at rounding. Tested in Adversarial.t.sol.
+    function _decimalsOffset() internal pure override returns (uint8) {
+        return 6;
+    }
+
     // -------------------------------------------------------- public signals
 
     function queueDepth() external view returns (uint256) {
