@@ -1,0 +1,6 @@
+[package]
+name = "book_delta"
+type = "bin"
+authors = ["Agama"]
+
+[dependencies]
