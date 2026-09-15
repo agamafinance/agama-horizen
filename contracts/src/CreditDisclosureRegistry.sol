@@ -71,6 +71,8 @@ contract CreditDisclosureRegistry is IRiskSurface, AccessControl {
     ///         a public transfer and this counter only moves when one happens.
     uint256 public deployedCumulative;
 
+    /// @notice Every stablecoin unit borrowers have returned, cumulatively.
+    uint256 public collectedCumulative;
     address public vault;
 
     /// @notice Independent verification: who looked, when, and what they signed.
@@ -278,6 +280,7 @@ contract CreditDisclosureRegistry is IRiskSurface, AccessControl {
         asset.safeTransferFrom(msg.sender, address(this), amount);
         uint64 e = epochOf(uint64(block.timestamp));
         realized[e] += uint128(amount);
+        collectedCumulative += amount;
         emit CollectionRecorded(e, uint128(amount), realized[e]);
     }
 
