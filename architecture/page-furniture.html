@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Agama page furniture</title>
+<style>
+  /* One A4 page holding only the running header and footer bands.
+     build.sh renders this once and stamps it onto every page, because Chrome
+     will not let a position:fixed element be painted inside the page margins.
+     Band heights here must stay in step with @page in style.css
+     (top margin 20mm, bottom margin 13mm). */
+
+  @page { size: A4; margin: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, sans-serif; }
+
+  .band-top,
+  .band-bottom { position: absolute; left: 0; right: 0; background: #254839; }
+
+  .band-top {
+    top: 0;
+    height: 14.7mm;
+    display: flex;
+    align-items: center;
+    padding: 0 5mm;
+    box-sizing: border-box;
+  }
+
+  .band-top .lockup { height: 5.7mm; display: block; }
+
+  .band-top .chain {
+    margin-left: 3.2mm;
+    padding-left: 3.2mm;
+    border-left: 0.75pt solid rgba(255,255,255,0.45);
+    color: #9fd9b8;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+  }
+
+  .band-top .url {
+    margin-left: auto;
+    color: #fff;
+    font-size: 9.5px;
+    letter-spacing: 0.1px;
+  }
+
+  .band-bottom { bottom: 0; height: 7mm; }
+
+  .band-bottom::after {
+    content: "";
+    position: absolute;
+    left: 3.5mm;
+    right: 3.5mm;
+    top: 50%;
+    height: 0.75pt;
+    background: #fff;
+  }
+</style>
+</head>
+<body>
+  <div class="band-top">
+    <img class="lockup" src="assets/agama-lockup.png" alt="Agama">
+    <span class="chain">HORIZEN CHAIN 26514</span>
+    <span class="url">agama.finance</span>
+  </div>
+  <div class="band-bottom"></div>
+</body>
+</html>
