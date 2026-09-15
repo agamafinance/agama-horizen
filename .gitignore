@@ -1,5 +1,5 @@
 contracts/out/
 contracts/cache/
 contracts/broadcast/
-circuits/*/target/
+zk/*/target/
 .DS_Store
