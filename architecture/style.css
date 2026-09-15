@@ -1,0 +1,368 @@
+/* ==========================================================================
+   Agama Technical Architecture
+   Print stylesheet, A4, rendered with headless Chrome (see build.sh)
+   --------------------------------------------------------------------------
+   Layout note: Chrome clamps position:fixed elements to the page content box,
+   so a running band cannot be drawn inside the page margins from here. The
+   green header and footer bands live in page-furniture.html, which build.sh
+   renders once and stamps onto every page. This file styles the body only.
+
+   Metrics note: every size below was measured off the reference PDF
+   (Agama Technical Architecture, 17pp) with pdftohtml -xml and by scanning
+   the rendered pages for table rules. Do not "tidy" them into round numbers;
+   the whole point is that a page here sits at the same density as the same
+   page there.
+   ========================================================================== */
+
+:root {
+  --green:        #254839;  /* Agama dark green, header and footer bands   */
+  --accent:       #2563eb;  /* section accent, rules, links                */
+  --violet:       #7c3aed;  /* sub-section headings                        */
+  --ink:          #1a1a2e;  /* body text, headings, table text             */
+  --muted:        #64748b;  /* secondary text                              */
+  --faint:        #94a3b8;  /* tertiary text                               */
+  --line:         #e2e8f0;  /* table and box borders                       */
+  --fill:         #f8fafc;  /* table header and code block fill            */
+  --green-fill:   #f0fdf4;  /* "Integration List" pill fill                */
+  --green-text:   #16a34a;
+  --green-line:   #bbf7d0;
+  --blue-fill:    #e1ebfc;  /* cover standards pill fill                   */
+  --blue-text:    #1d4ed8;
+  --note-fill:    #fefce8;  /* callout fill                                */
+  --note-line:    #facc15;  /* callout left bar                            */
+
+  --sans: "Helvetica Neue", Helvetica, "Segoe UI", Arial, sans-serif;
+  --serif: Charter, "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --mono: Menlo, "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+@page {
+  size: A4;
+  margin: 20mm 0 13mm 0;      /* horizontal inset comes from .doc padding, so */
+}                             /* full-bleed elements only need a negative margin */
+
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  line-height: 1.72;
+  color: var(--ink);
+  background: #fff;
+  /* The reference PDF was set in SF, which does not substitute an ff/fi/fl
+     ligature. Helvetica Neue does, and the ligature glyph breaks copy/paste
+     ("oﬀ-chain"). Turn it off so the text layer matches the reference. */
+  font-variant-ligatures: none;
+}
+
+/* ---------------------------------------------------------------- page -- */
+
+/* Every page is inset horizontally by this padding, which Chrome repeats on
+   each fragment. The inset is asymmetric because the reference document is:
+   its text block sits 16.75mm from the left edge and 13.5mm from the right.
+   The dark green header and footer bands are NOT drawn here: Chrome clamps
+   position:fixed elements to the page content box, so they cannot reach into
+   the page margins. build.sh renders page-furniture.html once and stamps it
+   onto every page instead. */
+.doc { padding: 0 13.5mm 0 16.75mm; }
+
+/* --------------------------------------------------------------- cover -- */
+
+.cover { position: relative; padding-top: 27.9mm; }
+
+.cover-coins {
+  position: absolute;
+  top: 25.7mm;
+  right: -3mm;
+  width: 38.5mm;
+}
+
+.cover-title {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 33px;
+  line-height: 1.1;
+  color: var(--green);
+  text-align: center;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+.cover-sub {
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  margin: 5.5mm 0 0;
+}
+
+.cover-sub2 {
+  text-align: center;
+  color: var(--muted);
+  font-size: 11.5px;
+  margin: 1.9mm 0 0;
+}
+
+.cover-meta {
+  text-align: center;
+  color: var(--muted);
+  font-size: 11.5px;
+  margin: 4.5mm 0 0;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2.5mm;
+  margin: 0.4mm 0 0;
+}
+
+.badge {
+  font-size: 9.8px;
+  font-weight: 700;
+  padding: 1.1mm 2.4mm;
+  border-radius: 2mm;
+  background: var(--green-fill);
+  color: var(--green-text);
+  white-space: nowrap;
+}
+
+.badge.std { background: var(--blue-fill); color: var(--blue-text); }
+
+.cover-rule {
+  border: 0;
+  border-top: 1.5pt solid var(--accent);
+  margin: 11mm 0 8.5mm;
+}
+
+/* -------------------------------------------------------------- contents */
+
+/* same blue as the section headings, but no rule under it */
+.contents-title {
+  font-size: 17.8px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 3.1mm;
+  padding: 0;
+  border: 0;
+  letter-spacing: 0;
+}
+
+.toc { list-style: none; margin: 0; padding: 0; line-height: 1.45; }
+.toc > li { margin: 0 0 5.2mm; }
+.toc a { color: var(--accent); text-decoration: none; font-size: 11.5px; }
+.toc ul { list-style: none; margin: 3.1mm 0 0; padding: 0 0 0 4.2mm; }
+.toc ul li { margin: 0 0 2.6mm; list-style: none; }
+.toc ul a { font-size: 11.5px; }
+
+/* ------------------------------------------------------------- headings -- */
+
+h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 11mm 0 0;
+  padding: 0 0 1.45mm;
+  border-bottom: 1.5pt solid var(--accent);
+  letter-spacing: -0.2px;
+  break-after: avoid;
+}
+
+/* What follows an h2 sits 3.6mm under its blue rule, 8.5mm if it is an h3.
+   The selectors are spelled out and repeated at the foot of this file because
+   a bare "h2 + *" loses on source order to the element rules below. */
+h2 + h3 { margin-top: 8.5mm; }
+
+h3 {
+  font-size: 17.8px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 8.5mm 0 3.2mm;
+  letter-spacing: -0.1px;
+  break-after: avoid;
+}
+
+h4 {
+  font-size: 13.3px;
+  font-weight: 700;
+  color: var(--violet);
+  margin: 6.5mm 0 2.6mm;
+  break-after: avoid;
+}
+
+/* plain dark bold label, used inside section 4 exactly as the original does */
+.label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 5.5mm 0 1.8mm;
+  break-after: avoid;
+}
+
+/* ---------------------------------------------------------------- text -- */
+
+p { margin: 0 0 1.9mm; }
+p:last-child { margin-bottom: 0; }
+
+strong { color: var(--ink); font-weight: 700; }
+
+a { color: var(--accent); }
+
+ul, ol { margin: 0 0 1.9mm; padding-left: 5mm; }
+li { margin: 0 0 0.85mm; }
+ul ul, ol ul { margin: 1.5mm 0 0; }
+ul ul li { list-style-type: circle; }
+
+
+/* --------------------------------------------------------------- tables -- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1.9mm;
+  font-size: 11.5px;
+  line-height: 1.62;
+  /* Tables are kept whole. A reference table split across a page break reads
+     as two shorter tables, and the reader has to hold the header in their head
+     to cross the seam. Chrome ignores this when a table is genuinely taller
+     than a page, and then the header group below repeats it, which is the
+     right fallback rather than the normal case. */
+  break-inside: avoid;
+}
+
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+
+
+th {
+  text-align: left;
+  background: var(--fill);
+  color: var(--ink);
+  font-weight: 700;
+  padding: 1.6mm 2.5mm;
+  border: 0.75pt solid var(--line);
+}
+
+td {
+  padding: 1.6mm 2.5mm;
+  border: 0.75pt solid var(--line);
+  vertical-align: top;
+}
+
+table.term td:first-child,
+table.bold-first td:first-child { font-weight: 700; color: var(--ink); }
+
+td.no { color: var(--muted); }
+
+.pill {
+  display: inline-block;
+  font-size: 9.8px;
+  font-weight: 700;
+  color: var(--green-text);
+  background: var(--green-fill);
+  border: 0.5pt solid var(--green-line);
+  border-radius: 1.5mm;
+  padding: 0.5mm 1.8mm;
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------- code -- */
+
+code {
+  font-family: var(--mono);
+  font-size: 10.7px;
+  background: var(--fill);
+  padding: 0.3mm 1mm;
+  border-radius: 0.8mm;
+  color: var(--ink);
+}
+
+td code, th code { background: transparent; padding: 0; }
+
+pre {
+  font-family: var(--mono);
+  font-size: 10.7px;
+  line-height: 1.46;
+  color: var(--ink);
+  background: var(--fill);
+  border: 0.75pt solid var(--line);
+  border-radius: 1.5mm;
+  padding: 3.5mm 4mm;
+  margin: 0 0 1.9mm;
+  white-space: pre;
+  overflow: visible;
+  break-inside: avoid;
+}
+
+/* -------------------------------------------------------------- callout -- */
+
+.callout {
+  background: var(--note-fill);
+  border-left: 3pt solid var(--note-line);
+  padding: 3mm 4mm;
+  margin: 0 0 1.9mm;
+  break-inside: avoid;
+}
+
+/* revision notice, deliberately neutral rather than a warning */
+.notice {
+  background: #f5f9f7;
+  border-left: 3pt solid var(--green);
+  padding: 4mm 5mm;
+  margin: 6mm 0 6mm;
+  break-inside: avoid;
+}
+
+.notice-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin: 0 0 2mm;
+}
+
+.notice p { margin: 0 0 2.5mm; }
+.notice p:last-child { margin: 0; }
+
+/* -------------------------------------------------------------- diagram -- */
+
+.page-break { break-before: page; }
+
+.diagram {
+  margin: 0 -13.5mm 1.9mm -16.75mm;
+  break-inside: avoid;
+}
+
+.diagram img { width: 91%; display: block; margin: 0 auto; }
+
+/* --------------------------------------------------------------- colophon */
+
+.colophon {
+  /* deliberately tight: the block has to share the last page with the
+     Stellar Ecosystem Proposals table, or it takes a page of its own */
+  margin-top: 2mm;
+  padding-top: 2mm;
+  border-top: 0.75pt solid var(--line);
+  text-align: center;
+  font-size: 10px;
+  color: var(--faint);
+}
+
+/* ------------------------------------------------- after a section rule -- */
+
+h2 + p,
+h2 + ul,
+h2 + ol,
+h2 + table,
+h2 + pre,
+h2 + h4,
+h2 + .label,
+h2 + .callout,
+h2 + .diagram { margin-top: 3.6mm; }
+
+/* The reference PDF carries both of these strings in its text layer but paints
+   them white, so neither is visible. Reproduced the same way: present for
+   search and copy, invisible on the page. */
+.cover-meta, .colophon { visibility: hidden; }
