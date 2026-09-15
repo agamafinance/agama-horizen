@@ -96,10 +96,26 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
         floorBps = bps;
     }
 
+    /// @notice Credit exposure outstanding, in asset units.
+    /// @dev    Takes the larger of what the latest proven surface reports and
+    ///         what the cash flows imply. Before the first surface exists the
+    ///         surface reads zero, and a floor measured on zero exposure could
+    ///         be salami-sliced towards nothing: deploy ninety percent, then
+    ///         ninety percent of the remainder, and so on.
+    function exposure() public view returns (uint256) {
+        uint256 fromSurface = registry.surface().totalPrincipal;
+        uint256 out = registry.deployedCumulative();
+        uint256 back = registry.collectedCumulative();
+        uint256 fromCash = out > back ? out - back : 0;
+        return fromSurface > fromCash ? fromSurface : fromCash;
+    }
+
     /// @notice Liquid stablecoins the vault may not go below, in asset units.
+    /// @dev    The base is assets under management, so moving cash from the
+    ///         buffer into the book leaves it unchanged and the floor cannot be
+    ///         walked down by repeated partial deployments.
     function reserveFloor() public view returns (uint256) {
-        uint256 base = buffer() + registry.surface().totalPrincipal + writtenOff;
-        return (base * floorBps) / 10_000;
+        return ((buffer() + exposure() + writtenOff) * floorBps) / 10_000;
     }
 
     // ------------------------------------------------------------------- NAV
@@ -156,10 +172,11 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
         uint256 free = buffer();
         if (amount > free) revert UndercollateralisedDeployment();
 
-        // The floor is measured on the book this deployment creates, not the
-        // one that existed before it, so it cannot be dodged by ordering.
+        // Assets under management do not change when cash moves into the book,
+        // so the floor this deployment must clear is the same one it would have
+        // had to clear as a single larger transfer. Slicing buys nothing.
+        uint256 required = reserveFloor();
         uint256 left = free - amount;
-        uint256 required = ((left + registry.surface().totalPrincipal + amount + writtenOff) * floorBps) / 10_000;
         if (left < required) revert BreachesReserveFloor(left, required);
 
         IERC20(asset()).safeTransfer(to, amount);
