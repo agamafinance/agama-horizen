@@ -1,0 +1,6 @@
+[package]
+name = "book_attest"
+type = "bin"
+authors = ["Agama"]
+
+[dependencies]
