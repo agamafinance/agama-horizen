@@ -1,0 +1,11 @@
+{
+  "testUSDC": "0x3552C44aec2A9976ec49F595901cA14DFB3860ac",
+  "honkVerifier": "0x57D463c6449eb25425D0137ca9E296A67c0486d1",
+  "deltaVerifier": "0xBD913f10e18C32b7c035f920B95CB24eE4B2acA9",
+  "registry": "0x034635c324d83D590691C68d711AA5FA2FbA084f",
+  "vault": "0x58b90F2aA6C48B19B8792Bf4a5dcd2437Ae8FfA9",
+  "genesisRoot": "0x1125cb61ab39eab9f1bfac79011f6a2ec5cccdc349b6cae2dd440ed304b200ba",
+  "epochGenesis": "1789506113",
+  "chainId": 2651420,
+  "explorer": "https://horizen-testnet.explorer.caldera.xyz"
+}
