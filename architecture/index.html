@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Agama Finance, Confidential Credit on Horizen</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- The green header and footer bands are not in this file. They live in
+     page-furniture.html and are stamped onto every page by build.sh. -->
+<div class="doc">
+
+<!-- ====================================================== COVER ========= -->
+
+<section class="cover">
+  <img class="cover-coins" src="assets/agama-coins.png" alt="">
+  <h1 class="cover-title">Agama Finance</h1>
+  <p class="cover-sub">Technical Architecture</p>
+  <p class="cover-sub2">Confidential Credit on Horizen</p>
+  <p class="cover-meta">September 2026 &middot; Horizen Builder Ecosystem Fund &middot; live on testnet 2651420</p>
+
+  <div class="badges">
+    <span class="badge std">ERC-4626</span>
+    <span class="badge std">UltraHonk</span>
+    <span class="badge">Horizen 26514</span>
+    <span class="badge">PureFi</span>
+    <span class="badge">USDC.e</span>
+    <span class="badge">Vela</span>
+  </div>
+
+  <hr class="cover-rule">
+
+  <h2 class="contents-title">Contents</h2>
+  <ul class="toc">
+    <li><a href="#s1">1. Summary</a>
+      <ul>
+        <li><a href="#s1-1">1.1 The Question This Document Answers</a></li>
+        <li><a href="#s1-2">1.2 Design Principle</a></li>
+        <li><a href="#s1-3">1.3 Proven, Observed, Trusted</a></li>
+        <li><a href="#s1-4">1.4 Definitions</a></li>
+      </ul>
+    </li>
+    <li><a href="#s2">2. Platform Assessment</a>
+      <ul>
+        <li><a href="#s2-1">2.1 Horizen Chain, Measured</a></li>
+        <li><a href="#s2-2">2.2 Vela, Measured</a></li>
+        <li><a href="#s2-3">2.3 zkVerify</a></li>
+        <li><a href="#s2-4">2.4 Where the Phase Boundary Falls</a></li>
+      </ul>
+    </li>
+    <li><a href="#s3">3. Architecture Overview</a>
+      <ul>
+        <li><a href="#s3-1">3.1 System Diagram</a></li>
+        <li><a href="#s3-2">3.2 Components</a></li>
+        <li><a href="#s3-3">3.3 The Disclosure Cycle</a></li>
+        <li><a href="#s3-4">3.4 The Loan Leaf</a></li>
+        <li><a href="#s3-5">3.5 The Public Risk Surface</a></li>
+      </ul>
+    </li>
+    <li><a href="#s4">4. The Attestation Circuit</a>
+      <ul>
+        <li><a href="#s4-1">4.1 Statement Proven</a></li>
+        <li><a href="#s4-2">4.2 What It Does Not Prove</a></li>
+        <li><a href="#s4-3">4.3 Measured Performance</a></li>
+      </ul>
+    </li>
+    <li><a href="#s5">5. Contracts</a>
+      <ul>
+        <li><a href="#s5-1">5.1 CreditDisclosureRegistry</a></li>
+        <li><a href="#s5-2">5.2 AgamaCreditVault</a></li>
+        <li><a href="#s5-3">5.3 IRiskSurface as a Horizen Primitive</a></li>
+        <li><a href="#s5-4">5.4 Compliance</a></li>
+      </ul>
+    </li>
+    <li><a href="#s6">6. Liquidity and the Exit Queue</a></li>
+    <li><a href="#s7">7. Trust Model and Known Limits</a></li>
+    <li><a href="#s8">8. Verification Results</a>
+      <ul>
+        <li><a href="#s8-1">8.1 Live on Horizen Testnet</a></li>
+        <li><a href="#s8-2">8.2 Test Suite</a></li>
+      </ul>
+    </li>
+    <li><a href="#s9">9. Phase 2, Vela Integration</a></li>
+    <li><a href="#s10">10. Milestones</a></li>
+  </ul>
+</section>
+
+
+<!-- ================================================ EVIDENCE MAP ======== -->
+
+<section>
+
+  <div class="notice">
+    <p class="notice-title">Where the evidence for this document lives</p>
+    <p>Every claim below is checkable without taking our word for it. The
+    repository accompanying this application is laid out so that each section
+    here has a folder behind it.</p>
+    <table class="bold-first" style="margin-top:2.5mm">
+      <thead>
+        <tr><th style="width:17%">Folder</th><th style="width:43%">Contents</th><th>Sections it backs</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>zk/</code></td><td><code>book_attest</code> and <code>book_delta</code> Noir circuits, the scenario generator, and the proving script that also runs the backdating attack on every build</td><td><a href="#s4">4</a>, <a href="#s4-4">4.4</a>, <a href="#s5-1">5.1</a></td></tr>
+        <tr><td><code>tee/</code></td><td>The full Vela stack we ran locally, the confidential lifecycle we executed on it, and the five findings that took it off our critical path</td><td><a href="#s2-2">2.2</a>, <a href="#s9">9</a></td></tr>
+        <tr><td><code>contracts/</code></td><td>Registry, vault, <code>IRiskSurface</code>, both generated verifiers, and thirty tests: fork, adversarial and stateful invariant</td><td><a href="#s5">5</a>, <a href="#s6">6</a>, <a href="#s8-2">8.2</a></td></tr>
+        <tr><td><code>deployment/</code></td><td>The live Horizen testnet deployment: scripts, addresses, every transaction hash, and a reader that dumps the public surface using only <code>eth_call</code></td><td><a href="#s8-1">8.1</a></td></tr>
+      </tbody>
+    </table>
+    <p>The contracts are source-verified on the Horizen explorer, so the code
+    running at the addresses in <a href="#s8-1">Section 8.1</a> can be read
+    directly rather than trusted.</p>
+  </div>
+
+<!-- ================================================ 1. SUMMARY ========== -->
+
+  <h2 id="s1">1. Summary</h2>
+
+  <h3 id="s1-1">1.1 The Question This Document Answers</h3>
+
+  <p>Horizen's review of our first submission made one observation that this entire
+  architecture exists to answer:</p>
+
+  <div class="callout">
+    <strong>&ldquo;If the issuer signs a clean book and the loans are already bad, the TEE and
+    the ZK proof still pass.&rdquo;</strong>
+  </div>
+
+  <p>That is correct, and no amount of additional cryptography changes it. A trusted execution
+  environment attests that code ran on some data. A zero-knowledge proof attests that numbers
+  follow from some commitment. Neither one reaches the world. A design that answers this
+  objection by adding more cryptography is answering a different objection.</p>
+
+  <p>The design below therefore does not try to prove that loans are good. It makes the claim
+  that they are good <strong>falsifiable in public, on a fixed clock, without naming a single
+  borrower</strong>. A clean signature over a bad book still produces a valid proof. It then
+  fails the cash calendar it published a month earlier, mechanically, with nobody's cooperation
+  required.</p>
+
+  <h3 id="s1-2">1.2 Design Principle</h3>
+
+  <p class="label">Confidentiality covers identity. It does not cover risk.</p>
+
+  <p>Hiding a borrower's name is a legitimate commercial requirement and we defend it. Hiding
+  the shape of an exposure is not a privacy feature: it is an information advantage held over
+  the person who takes the loss. Our first submission published NAV and vault size, which let a
+  depositor check arithmetic and nothing else. Every risk-bearing property of the book is now
+  public, in aggregate, proven against a commitment, and machine readable.</p>
+
+  <h3 id="s1-3">1.3 Proven, Observed, Trusted</h3>
+
+  <p>Every claim this system makes falls into exactly one of three categories, and the document
+  is explicit about which:</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:17%">Category</th><th style="width:42%">Mechanism</th><th>Examples</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Proven</td>
+        <td>Zero-knowledge proof against an on-chain Merkle commitment, verified on Horizen</td>
+        <td>Outstanding principal, maturity ladder, delinquency buckets, concentration, forward cash calendar</td>
+      </tr>
+      <tr>
+        <td>Observed</td>
+        <td>On-chain state, no assertion by any party</td>
+        <td>Cash collected, cash disbursed, redemption queue depth, first-loss remaining, who requested book access and when</td>
+      </tr>
+      <tr>
+        <td>Trusted</td>
+        <td>Residual, bounded, and named in <a href="#s7">Section 7</a></td>
+        <td>That the committed leaves describe real loans; that the verification agent is honest</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The third row is the honest one. It is small, it is named, and it is bounded by
+  economics rather than by a promise: a book may never claim more principal than the chain
+  watched leave the vault, so inventing exposure costs real, publicly visible cash.</p>
+
+  <h3 id="s1-4">1.4 Definitions</h3>
+
+  <table class="term">
+    <thead>
+      <tr><th style="width:21%">Term</th><th>Definition</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Risk surface</td><td>The set of aggregate credit properties published for a book: count, principal, maturity ladder, forward cash calendar, delinquency buckets, largest single-obligor exposure.</td></tr>
+      <tr><td>Book root</td><td>Merkle root over the loan leaves. Committed on-chain before the positions it covers are funded.</td></tr>
+      <tr><td>Forward cash calendar</td><td>Contractual cash due over the 30 days following a valuation date, published <em>before</em> that period begins.</td></tr>
+      <tr><td>Performance ratio</td><td>Realised collections divided by the calendar published in advance for the same period.</td></tr>
+      <tr><td>Impairment schedule</td><td>A fixed public write-down per delinquency bucket, applied mechanically. The originator has no discretion over its own mark.</td></tr>
+      <tr><td>First loss</td><td>Originator capital escrowed in the vault, junior to every depositor, consumed before any depositor loss.</td></tr>
+      <tr><td>Verification agent</td><td>An independent party with full book access. Its access requests are on-chain transactions.</td></tr>
+      <tr><td>Vela</td><td>Horizen's TEE-based confidential coprocessor. Closed beta, see <a href="#s2-2">Section 2.2</a>.</td></tr>
+    </tbody>
+  </table>
+
+
+<!-- ============================================ 2. PLATFORM ============= -->
+
+  <h2 id="s2">2. Platform Assessment</h2>
+
+  <p>Everything in this section was measured against live endpoints on 15 September 2026, not
+  taken from documentation. The measurements are reproducible from the repository accompanying
+  this document.</p>
+
+  <h3 id="s2-1">2.1 Horizen Chain, Measured</h3>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:32%">Property</th><th>Measured value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Chain ID</td><td>26514, <code>eth_chainId</code> returns <code>0x6792</code></td></tr>
+      <tr><td>Stack</td><td>OP Stack rollup on Caldera, settles to Base, Base settles to Ethereum</td></tr>
+      <tr><td>Block time</td><td>1.00 s, averaged over 50,000 blocks</td></tr>
+      <tr><td>Gas price</td><td>1,000,764 wei, about 0.001 gwei. Gas token is ETH</td></tr>
+      <tr><td>Block gas limit</td><td>30,000,000</td></tr>
+      <tr><td>Chain activity</td><td>307 transactions across the last 300 blocks</td></tr>
+      <tr><td>USDC.e total supply</td><td><strong>3,166.65 USDC</strong></td></tr>
+      <tr><td>PureFi Verifier</td><td><code>0x681Edd4906e2a0a277E2A6c394A4595f83e1329c</code>, 2,008 bytes of code, callable</td></tr>
+      <tr><td>Stork Oracle</td><td><code>0xacC0a0cF13571d30B4b8637996F5D6D774d4fd62</code>, deployed</td></tr>
+    </tbody>
+  </table>
+
+  <p>Two of these rows shape the design.</p>
+
+  <p><strong>The stablecoin supply.</strong> Horizen mainnet has roughly three thousand dollars
+  of USDC.e on it. There is nothing to lend and nothing to lend against. A credit product here
+  is not competing for existing liquidity, it is the reason liquidity would arrive. That is the
+  strategic case for funding a money market primitive rather than an application.</p>
+
+  <p><strong>The gas price.</strong> At 0.001 gwei, verifying a zero-knowledge proof directly
+  on Horizen costs about two thirds of a US cent (<a href="#s4-3">Section 4.3</a>). Daily
+  attestation of a full credit book costs under 2.40 USD a year. This removes the usual reason
+  to attest monthly, and it changes what the product can promise: disclosure becomes a
+  continuous signal rather than a periodic report.</p>
+
+  <h3 id="s2-2">2.2 Vela, Measured</h3>
+
+  <p>We ran Vela rather than reading about it. The full v0.2.0 stack from
+  <code>HorizenOfficial/vela-starterkit</code> was brought up locally and a complete
+  confidential lifecycle executed. Every command, and the five findings it
+  produced, are in <code>tee/README.md</code>:</p>
+
+  <ul>
+    <li>WASM application deployed into the enclave, application ID <code>7335106231336828932</code>.</li>
+    <li>P-521 user key registered on-chain via an <code>ASSOCIATEKEY</code> request.</li>
+    <li>1 ETH deposited, private balance readable only by the key holder.</li>
+    <li>Deanonymisation authority granted through <code>DefaultAuthority.addAllowedAuthority</code>, emitting a public event.</li>
+    <li>Deanonymisation report requested on-chain, generated inside the enclave, encrypted to the authority's P-521 key, downloaded and decrypted successfully.</li>
+  </ul>
+
+  <p>The last step is the one that matters to this architecture: a designated authority, and
+  only a designated authority, can pull private state, and <strong>the act of pulling it is an
+  on-chain transaction that everyone can see</strong>. Requests from an unauthorised address
+  revert with <code>AuthorityNotAllowed</code>, which we confirmed.</p>
+
+  <p class="label">The blocking constraint</p>
+
+  <p>Horizen's own limitations page states that Vela &ldquo;is not yet deployed to any testnet
+  or mainnet environment&rdquo; and that the development environment &ldquo;uses an emulated
+  Trusted Execution Environment rather than hardware enclaves&rdquo;. The local stack confirms
+  it: <code>TEE_NO_ATTESTATION=true</code>, and all three enclave keys (AES state key,
+  secp256k1 signing key, P-521 communication key) sit in plaintext in the shipped
+  <code>.env.dev</code>.</p>
+
+  <div class="callout">
+    <strong>Consequence for this design.</strong> In September 2026 a Vela dependency cannot
+    sit on the critical path of a mainnet product, because the hardware guarantee it will
+    eventually provide does not yet exist. Phase 1 therefore uses no Vela. Confidentiality
+    comes from Merkle commitments and zero-knowledge proofs verified on Horizen mainnet today.
+    Vela is an upgrade to a working system (<a href="#s9">Section 9</a>), not a promise
+    standing in for one.
+  </div>
+
+  <p class="label">What Vela makes public, by design</p>
+
+  <p>This is a design input rather than a criticism, and it happens to suit a credit vault. The
+  <code>ProcessorEndpoint</code> interface and the local chain agree:</p>
+
+  <table>
+    <thead>
+      <tr><th style="width:50%">Public on-chain</th><th>Private inside the enclave</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Sender address of every request</td><td>Request payload</td></tr>
+      <tr><td><code>assetAmount</code> on every deposit, a plain calldata field</td><td>Internal ledger state</td></tr>
+      <tr><td>Withdrawal recipient, token and amount</td><td>Per-user balances</td></tr>
+      <tr><td>Request timing, success or failure</td><td><code>UserEvent</code> contents, P-521 encrypted</td></tr>
+      <tr><td>State root after every transition</td><td class="no">&mdash;</td></tr>
+      <tr><td>Every authority grant, revocation and report request</td><td class="no">&mdash;</td></tr>
+    </tbody>
+  </table>
+
+  <p>Vela's perimeter is public and its interior is private. Money entering and leaving is
+  fully visible with amounts and addresses; only the internal bookkeeping is hidden. For
+  confidential credit this is the correct shape: we want the cash rail public and the borrower
+  list private. Phase 2 builds on it rather than against it.</p>
+
+  <p class="label">Other constraints recorded</p>
+
+  <ul>
+    <li>One WASM application per environment in v0.2.0.</li>
+    <li>TinyGo only. No <code>reflect</code>, no <code>net</code>, no <code>math/big</code>, and strict determinism: no <code>time.Now()</code>, no randomness.</li>
+    <li>Execution is stateless per call. The whole application state is serialised in and out of every invocation, which caps practical book size.</li>
+    <li>A counterparty must register a P-521 key before it can receive anything. Our first private transfer failed with <code>no Secp521r1_PubKey found</code> until the receiver registered. Every borrower and LP must be onboarded with a key.</li>
+    <li><code>AuthorityRegistry.setAppAuthorityContract</code> lets an application supply its own authority checker, so the rule for who may look can itself be a smart contract. Phase 2 uses this.</li>
+  </ul>
+
+  <h3 id="s2-3">2.3 zkVerify</h3>
+
+  <p>zkVerify is live as its own L1 and its EVM verification contracts are deployed on Base,
+  Sepolia, Base Sepolia, Arbitrum Sepolia, Optimism Sepolia and EDU Chain Testnet.
+  <strong>Not on Horizen L3.</strong> Consuming a zkVerify aggregation from a Horizen contract
+  would require a relayer that Horizen does not currently run.</p>
+
+  <p>More decisively, zkVerify exists to solve a cost problem: verifying a proof on Ethereum L1
+  costs 200,000 to 300,000 gas at L1 gas prices. On Horizen at 0.001 gwei that argument does
+  not apply. We verify directly on Horizen and treat zkVerify as an optional later
+  optimisation for aggregating proofs across many originators, not as a dependency.</p>
+
+  <h3 id="s2-4">2.4 Where the Phase Boundary Falls</h3>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:30%">Component</th><th style="width:40%">Status</th><th>Phase 1</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Horizen mainnet, EVM, ERC-4626</td><td>Live, 1 s blocks, effectively free gas</td><td><span class="pill">Yes</span></td></tr>
+      <tr><td>USDC.e</td><td>Live, 3,166 USDC outstanding</td><td><span class="pill">Yes</span></td></tr>
+      <tr><td>PureFi AML and KYC</td><td>Live, verified callable</td><td><span class="pill">Yes</span></td></tr>
+      <tr><td>On-chain ZK verification</td><td>2,178,509 gas on a mainnet fork, 2,364,725 live on testnet</td><td><span class="pill">Yes</span></td></tr>
+      <tr><td>Stork oracle</td><td>Live</td><td class="no">Not needed</td></tr>
+      <tr><td>zkVerify</td><td>Live, not deployed on Horizen L3</td><td class="no">No</td></tr>
+      <tr><td>Vela TEE</td><td>Closed beta, local Docker, no attestation</td><td class="no">Phase 2</td></tr>
+    </tbody>
+  </table>
+
+
+<!-- ============================================ 3. ARCHITECTURE ========= -->
+
+  <h2 id="s3">3. Architecture Overview</h2>
+
+  <h3 id="s3-1">3.1 System Diagram</h3>
+
+  <div class="diagram">
+    <img src="assets/agama-horizen-architecture.svg"
+         alt="Agama on Horizen: confidential loan book and attestation prover off-chain, CreditDisclosureRegistry and AgamaCreditVault on Horizen mainnet, PureFi and USDC.e live, Vela as phase 2, settling through Base to Ethereum.">
+  </div>
+
+  <h3 id="s3-2">3.2 Components</h3>
+
+  <p class="label">Off-chain, confidential</p>
+  <ul>
+    <li><strong>Loan book.</strong> Obligor identifier, principal, maturity, next payment date and amount, delinquency status, commitment timestamp, blinding salt. Never leaves the originator.</li>
+    <li><strong>Attestation prover.</strong> Noir circuit compiled to UltraHonk. Takes the book as a private witness and emits a proof plus seventeen public field elements.</li>
+    <li><strong>Verification agent.</strong> An independent party with full book access that underwrites the credit properly. Every access is recorded on-chain.</li>
+  </ul>
+
+  <p class="label">On Horizen mainnet, public</p>
+  <ul>
+    <li><strong>HonkVerifier.</strong> Generated from the circuit's verification key. 22,063 bytes of runtime code against the 24,576 byte limit.</li>
+    <li><strong>CreditDisclosureRegistry.</strong> Book commitments, proven risk surfaces, the forward cash calendar, realised collections, and the verification-agent attestation log. MIT licensed, no dependency on Agama's vault.</li>
+    <li><strong>AgamaCreditVault.</strong> ERC-4626 over USDC.e. NAV engine, first-loss escrow, public redemption queue.</li>
+    <li><strong>PureFi Verifier.</strong> Already deployed by Horizen. Synchronous AML enforcement as a blocking call.</li>
+  </ul>
+
+  <h3 id="s3-3">3.3 The Disclosure Cycle</h3>
+
+  <p>Ordering is the substance of this design, not an implementation detail. Each step is
+  constrained to happen before the one that follows, and the contracts enforce it:</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:6%">#</th><th style="width:30%">Step</th><th>Why it must happen here</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td><code>commitBook(root)</code></td><td>Terms and payment schedules are fixed on-chain <em>before</em> anyone knows the outcome. The commitment is what a later proof is measured against.</td></tr>
+      <tr><td>2</td><td><code>deploy(to, amount, root)</code></td><td>Cash moves only against an already-committed book. The transfer is public, and it raises the ceiling on how much principal any future surface may claim.</td></tr>
+      <tr><td>3</td><td><code>publishSurface(proof, inputs)</code></td><td>The proven aggregates are stored, and the forward cash calendar is written to the epoch it covers. Writing it later than the period would be worthless, so the contract writes it first.</td></tr>
+      <tr><td>4</td><td><code>recordCollection(amount)</code></td><td>Borrower repayments arrive as on-chain stablecoin transfers. Realised cash is observed, never reported.</td></tr>
+      <tr><td>5</td><td><code>performanceRatio(epoch)</code></td><td>Realised against scheduled. This is the number a signed-but-bad book cannot survive.</td></tr>
+      <tr><td>6</td><td><code>attest(root, asOf, findings)</code></td><td>The verification agent records that it looked and what it concluded. The depositor reads this, and reads its absence.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="s3-4">3.4 The Loan Leaf</h3>
+
+  <p>Each position is a leaf in a Merkle tree over 64 slots per attestation batch. The leaf
+  hash commits to every field, so no field can change without changing the root:</p>
+
+<pre><code>pub struct Loan {
+    obligor: Field,     // salted obligor id, stable across attestations
+    principal: u64,     // outstanding principal, 6dp stablecoin units
+    maturity_ts: u64,   // final maturity
+    due_ts: u64,        // next scheduled payment date
+    due_amount: u64,    // amount contractually due at due_ts
+    status: u8,         // 0 current | 1 1-30dpd | 2 31-60 | 3 61-90 | 4 90+
+    committed_ts: u64,  // when this leaf was first committed on-chain
+    salt: Field,        // blinding factor
+}</code></pre>
+
+  <p>The <code>obligor</code> field is a salted identifier rather than a name. It is stable
+  across attestations, which is what lets the circuit aggregate exposure per borrower and prove
+  a concentration figure without revealing who anyone is. The <code>salt</code> prevents a
+  dictionary attack on a leaf whose other fields an observer might guess.</p>
+
+  <h3 id="s3-5">3.5 The Public Risk Surface</h3>
+
+  <p>Each attestation publishes the following, all proven against the committed root:</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:30%">Field</th><th style="width:36%">Meaning</th><th>Reference book</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>positions</code></td><td>Active position count</td><td>22</td></tr>
+      <tr><td><code>totalPrincipal</code></td><td>Outstanding principal</td><td>4,760,000 USDC</td></tr>
+      <tr><td><code>ladder[5]</code></td><td>Principal maturing within 30, 90, 180, 365 days and beyond</td><td>190k / 660k / 995k / 1,530k / 1,385k</td></tr>
+      <tr><td><code>dueNext30d</code></td><td>Contractual cash due over the next 30 days</td><td>33,487.50 USDC</td></tr>
+      <tr><td><code>delinquent[5]</code></td><td>Principal by delinquency bucket</td><td>4,215k current, 435k 1-30dpd, 110k 90+</td></tr>
+      <tr><td><code>top1</code></td><td>Largest single-obligor exposure</td><td>1,050,000 USDC, 22.05%</td></tr>
+      <tr><td><code>maxCommittedTs</code></td><td>Newest per-leaf commitment timestamp</td><td>anti-backdating watermark</td></tr>
+    </tbody>
+  </table>
+
+  <p>A depositor reading that row knows they are buying a 22-position book with a 22 percent
+  top-name concentration, 2.31 percent already ninety days past due, and 190,000 USDC maturing
+  inside the month. They know the risk shape they are taking. They still cannot name one
+  borrower, and they never will.</p>
+
+
+<!-- ============================================ 4. CIRCUIT ============== -->
+
+  <h2 id="s4">4. The Attestation Circuit</h2>
+
+  <p>Source in <code>zk/book_attest</code>. <code>zk/prove.sh</code> rebuilds every proof
+  quoted in this document from scratch, and fails the build if the backdating attack in
+  <a href="#s4-4">Section 4.4</a> ever produces a valid proof.</p>
+
+  <h3 id="s4-1">4.1 Statement Proven</h3>
+
+  <p>Given a private array of 64 loan leaves and a public valuation date, the circuit proves
+  all of the following simultaneously:</p>
+
+  <ul>
+    <li>The published Merkle root is the root of exactly these leaves.</li>
+    <li>Position count and outstanding principal are the honest sums over the active leaves.</li>
+    <li>The maturity ladder buckets every position correctly relative to the valuation date.</li>
+    <li>The forward cash calendar is the sum of <code>due_amount</code> over every position whose next payment falls in the 30 days after the valuation date.</li>
+    <li>Delinquency buckets partition the principal by status, and no status is out of range.</li>
+    <li>The concentration figure is the true maximum exposure aggregated per obligor, computed over all 4,096 obligor pairs.</li>
+    <li><strong>No leaf claims a commitment timestamp later than the valuation date it is published under.</strong></li>
+  </ul>
+
+  <p>The last constraint is the circuit's contribution to the honesty problem. Without it, a
+  defaulted position could be inserted after the fact and backdated into a clean history.</p>
+
+  <h3 id="s4-2">4.2 What It Does Not Prove</h3>
+
+  <div class="callout">
+    <strong>The circuit does not prove that the loans are good, and no circuit can.</strong>
+    It proves that whatever the originator committed to, the published numbers describe it
+    exactly, and that the commitment predates the outcome. Loan quality is established
+    afterwards, in public, by the forward cash calendar the circuit emits and the collections
+    that either match it or do not.
+  </div>
+
+  <p>This is stated in the circuit's own source comment rather than only in documentation,
+  because the distinction is the product.</p>
+
+  <h3 id="s4-3">4.3 Measured Performance</h3>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:38%">Metric</th><th>Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Toolchain</td><td>Noir 1.0.0-beta.13, UltraHonk, keccak oracle</td></tr>
+      <tr><td>ACIR opcodes</td><td>65,939</td></tr>
+      <tr><td>Circuit size</td><td>2<sup>18</sup></td></tr>
+      <tr><td>Proving time</td><td>3.0 s on a laptop, 14 threads</td></tr>
+      <tr><td>Proof size</td><td>14,592 bytes</td></tr>
+      <tr><td>Public inputs</td><td>17 field elements, 544 bytes</td></tr>
+      <tr><td>Verifier runtime size</td><td>22,063 bytes, 2,513 bytes below the contract limit</td></tr>
+    </tbody>
+  </table>
+
+  <p class="label">On-chain cost, measured on a fork of Horizen mainnet</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:38%">Operation</th><th>Gas</th><th>ETH</th><th>USD at 3,000</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>commitBook</code></td><td>98,485</td><td>0.0000000986</td><td>0.00030</td></tr>
+      <tr><td><code>deposit</code>, ERC-4626</td><td>127,087</td><td>0.0000001272</td><td>0.00038</td></tr>
+      <tr><td><code>publishSurface</code>, full verification</td><td><strong>2,178,509</strong></td><td>0.0000021802</td><td><strong>0.0065</strong></td></tr>
+      <tr><td><code>settle</code>, two queue tickets</td><td>85,100</td><td>0.0000000852</td><td>0.00026</td></tr>
+    </tbody>
+  </table>
+
+  <p>One caveat worth recording: the verifier sits 2,513 bytes below the 24,576 byte contract
+  size limit. Materially growing the public input set will require splitting the verifier or
+  moving to a proof system with a smaller one.</p>
+
+  <h3 id="s4-4">4.4 The Revision Circuit</h3>
+
+  <p>The attestation circuit proves that a surface honestly describes whatever book was
+  committed. It cannot, on its own, prove that a <em>revision</em> of the book is an honest
+  evolution of the previous one. Without that, an originator could publish a second root
+  containing a loan that had already defaulted, stamped with an old origination date, and every
+  surface over it would still verify.</p>
+
+  <p><code>book_delta</code> closes this. Its central design decision is that a position holds
+  a permanent slot for the life of the book. Slots are never reused, so a repaid loan sits at
+  zero principal rather than freeing its slot for a replacement, and matching two books becomes
+  a linear walk rather than a search.</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:30%">Operation</th><th>Rule proven</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Carry a position</td><td>Obligor, maturity, origination date and salt are unchanged. Principal may only amortise down, never re-advance. The next payment date may only move forward.</td></tr>
+      <tr><td>Revise an amount due</td><td>The amount due at an unchanged payment date may not be lowered, so the bar a position is judged against cannot be moved once set.</td></tr>
+      <tr><td>Change status</td><td>Free in both directions. Deterioration has to be expressible; that is the point of a revision.</td></tr>
+      <tr><td>Open a position</td><td>Only into a slot that was empty, and only with an origination date at or after the moment the previous root reached the chain.</td></tr>
+      <tr><td>Use an empty slot</td><td>Nothing may hide in it: principal, obligor and timestamp must all be zero.</td></tr>
+    </tbody>
+  </table>
+
+  <p>The fourth row is the one that matters. The registry supplies the previous root's on-chain
+  commitment timestamp as a public input and refuses any proof that disagrees with what the
+  chain recorded, so the circuit is always measured against a date the originator did not
+  choose.</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:38%">Metric</th><th>Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>ACIR opcodes</td><td>6,906, roughly a tenth of the attestation circuit</td></tr>
+      <tr><td>Proving time</td><td>1.2 s</td></tr>
+      <tr><td>Public inputs</td><td>4: old root, previous commitment time, valuation date, new root</td></tr>
+      <tr><td>On-chain verification</td><td>2,222,133 gas, measured on Horizen testnet</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Demonstrated, not asserted.</strong> <code>zk/prove.sh</code> builds an
+    <code>evil</code> scenario in which a defaulted 900,000 USDC position is dropped into a free
+    slot with an origination date 200 days before the previous commitment. Witness generation
+    fails with <code>Assertion failed: new position backdated</code>. The build script treats a
+    successful proof of that scenario as a build failure.
+  </div>
+
+
+<!-- ============================================ 5. CONTRACTS ============ -->
+
+  <h2 id="s5">5. Contracts</h2>
+
+  <h3 id="s5-1">5.1 CreditDisclosureRegistry</h3>
+
+  <p>The registry holds three things that a confidential credit product normally keeps in a
+  side letter: the commitment history, the calendar the book promised, and the record of who
+  has been allowed to look at it.</p>
+
+  <p class="label">Anti-backdating, at four levels</p>
+
+  <ol>
+    <li><strong>In the attestation circuit.</strong> No leaf may claim a commitment timestamp later than the valuation date it is published under.</li>
+    <li><strong>In the revision circuit.</strong> Every new version of the book is proven to descend from the previous one by permitted operations only. See <a href="#s4-4">Section 4.4</a>.</li>
+    <li><strong>In the registry.</strong> A surface is rejected unless its root was committed earlier, and unless the newest leaf commitment predates the moment that root reached the chain.
+<pre><code>if (committedAt == 0)          revert RootNotCommitted();
+if (asOf &lt; committedAt)        revert AsOfBeforeCommit();
+if (maxCommittedTs &gt; committedAt) revert LeafBackdated();</code></pre>
+    </li>
+    <li><strong>In economics.</strong> A book may never claim more principal than the chain watched leave the vault:
+<pre><code>if (claimedPrincipal &gt; deployedCumulative) revert PrincipalExceedsDisbursed();</code></pre>
+    Disbursement is a public transfer, so inventing exposure costs real, visible cash. This is the binding constraint, and it is the reason the first two are enough in practice.</li>
+  </ol>
+
+  <p class="label">Mechanical impairment</p>
+
+  <p>The write-down applied to each delinquency bucket is fixed at deployment and public:</p>
+
+<pre><code>uint16[5] public IMPAIRMENT_BPS = [0, 1000, 3000, 6000, 10000];</code></pre>
+
+  <p>Carrying value is <code>totalPrincipal - impairedPrincipal()</code>, a pure function of
+  the proven surface and this constant. Nobody signs a NAV. In the reference scenario,
+  impairment moves from 153,500 to 246,500 USDC between two attestations on the same positions
+  with no human marking anything.</p>
+
+  <p class="label">Verification access as public state</p>
+
+  <p><code>attest(root, asOf, findingsHash)</code> records who looked, when, at which book, and
+  what they concluded. <code>verificationAge()</code> returns the seconds since anyone last
+  did. A depositor cannot read the book. A depositor can read the fact that an independent
+  party with full access is reviewing it on a fixed cadence, and can read the silence when it
+  stops.</p>
+
+  <h3 id="s5-2">5.2 AgamaCreditVault</h3>
+
+  <p>ERC-4626 over USDC.e, so shares compose with anything on Horizen. Three behaviours differ
+  from a standard vault, all deliberately.</p>
+
+  <p class="label">NAV is computed, not asserted</p>
+
+<pre><code>function totalAssets() public view override returns (uint256) {
+    uint256 principal = registry.surface().totalPrincipal;
+    uint256 impaired  = registry.impairedPrincipal();
+    uint256 absorbed  = impaired &lt; firstLoss ? impaired : firstLoss;
+    return buffer() + principal - impaired + absorbed;
+}</code></pre>
+
+  <p>Every term is either an on-chain balance or a proven public input. There is no path by
+  which the originator marks its own book.</p>
+
+  <p class="label">First loss is on-chain and junior</p>
+
+  <p>Originator capital is escrowed in the vault and consumed before any depositor loss.
+  <code>firstLossRemaining()</code> is public, so its depletion is visible as it happens rather
+  than at the moment it stops protecting anyone. In the reference scenario it is fully consumed
+  at 246,500 USDC of impairment, and the share price then falls from 1.0000 to 0.9915 with no
+  intervention.</p>
+
+  <p class="label">Instant redemption is disabled</p>
+
+  <p><code>maxWithdraw</code> and <code>maxRedeem</code> return zero. An instant exit for the
+  fastest depositor is the mechanism that converts illiquidity into a run. See
+  <a href="#s6">Section 6</a>.</p>
+
+  <h3 id="s5-3">5.3 IRiskSurface as a Horizen Primitive</h3>
+
+  <p>Horizen's review asked for &ldquo;a money market primitive we can diligence on-chain&rdquo;.
+  We read that literally: a <em>contract</em> should be able to underwrite this vault, not only
+  a human reading a document.</p>
+
+<pre><code>interface IRiskSurface {
+    function surface()           external view returns (Surface memory);
+    function impairedPrincipal() external view returns (uint256);
+    function scheduledFor(uint64 epoch) external view returns (uint128);
+    function realizedFor(uint64 epoch)  external view returns (uint128);
+    function performanceRatio(uint64 epoch) external view returns (uint256);
+    function concentration()     external view returns (uint256);
+    function attestationAge()    external view returns (uint256);
+}</code></pre>
+
+  <p>A Horizen lending market can set an LTV on vault shares programmatically: refuse
+  collateral whose <code>attestationAge()</code> exceeds a threshold, haircut by
+  <code>concentration()</code>, liquidate on a <code>performanceRatio()</code> below a floor.
+  That is on-chain diligence in the literal sense.</p>
+
+  <p>The interface and the reference registry are MIT licensed with no dependency on Agama's
+  vault. We are proposing them as the disclosure standard for confidential credit on Horizen.
+  If a second originator adopts the standard and Agama never earns a dollar from them, the
+  grant has still done its work.</p>
+
+  <h3 id="s5-4">5.4 Compliance</h3>
+
+  <p>PureFi is live on Horizen mainnet and the vault gates deposits on it.
+  <code>depositWithCompliance</code> calls <code>validatePayload</code> as its first operation,
+  so a failed AML check reverts the entire transaction and a non-compliant deposit never exists
+  as state. Our fork test confirms both that the verifier is deployed and that an invalid
+  payload reverts the deposit.</p>
+
+
+<!-- ============================================ 6. LIQUIDITY ============ -->
+
+  <h2 id="s6">6. Liquidity and the Exit Queue</h2>
+
+  <p>Horizen's review noted that weekly redemptions leave the depositor last to see a run. The
+  weekly gate is gone, and it was the right thing to remove: a discretionary gate creates the
+  run it is meant to prevent, because being early pays.</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:26%">Property</th><th style="width:37%">Mechanism</th><th>Effect</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>The queue is public</td>
+        <td><code>RedemptionRequested</code> events plus <code>queueDepth()</code> and per-ticket getters</td>
+        <td>No depositor learns about an exodus after the others. The queue is the signal.</td>
+      </tr>
+      <tr>
+        <td>Settlement is pro-rata</td>
+        <td><code>settle()</code> computes one ratio for the whole open queue and is permissionless</td>
+        <td>Queueing first buys nothing, so there is no race to queue.</td>
+      </tr>
+      <tr>
+        <td>Shortfall is announced early</td>
+        <td><code>coverageRatio()</code> = (buffer + 30-day inflows + 30-day maturities) / queued</td>
+        <td>A depositor sees the gap about a month before it binds.</td>
+      </tr>
+      <tr>
+        <td>No discretion exists</td>
+        <td>No role can choose who is paid or reorder the queue</td>
+        <td>There is nothing for a manager to decide under pressure.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>In the reference scenario two LPs holding 3.3 M and 2.2 M of a 5.5 M vault queue one block
+  apart. Both receive 13.45 percent of what they asked for. Pushed harder, with forty tickets
+  spanning two orders of magnitude and each joining a block later than the last, every single
+  one fills at 17.15 percent. <code>coverageRatio()</code> reads 17.51 percent, and it reads
+  that before the cash is needed rather than after.</p>
+
+  <div class="callout">
+    <strong>What this does not fix.</strong> Illiquidity does not disappear. A book of
+    nine-month loans cannot pay everyone next week and no mechanism changes that. What changes
+    is that the depositor sees the shortfall coming, sees it at the same moment as everyone
+    else, and gains nothing from panicking.
+  </div>
+
+  <p>Settlement processes the entire open queue in one transaction, bounded by
+  <code>MAX_QUEUE = 256</code>. Exceeding that bound is a public condition rather than a
+  discretionary gate. A full 256-ticket queue settles in 13,434,703 gas, inside Horizen's
+  30,000,000 block limit, which we measured rather than assumed.</p>
+
+  <p class="label">The reserve floor</p>
+
+  <p>Nothing above helps if the originator can deploy the entire vault into the book. A
+  deployment is refused unless it leaves liquid stablecoins worth at least
+  <code>floorBps</code> of assets under management, 1,000 basis points at deployment.</p>
+
+  <p>The base is deliberately assets under management rather than the liquid balance. A floor
+  measured on the buffer alone can be walked to nothing by repeated partial deployments: take
+  ninety percent, then ninety percent of what is left, and so on. Measured on a base that does
+  not move when cash shifts from the buffer into the book, slicing buys the originator nothing.
+  <code>test_ReserveFloorCannotBeDrained</code> attempts exactly that and fails to get below the
+  floor.</p>
+
+  <p>The floor binds deployments, not redemptions. A queue is entitled to drain the buffer,
+  that is what the buffer is for, and the originator simply cannot deploy again until the book
+  is back above its floor.</p>
+
+
+<!-- ============================================ 7. TRUST ================ -->
+
+  <h2 id="s7">7. Trust Model and Known Limits</h2>
+
+  <p>This section exists because a confidential credit product that will not name its residual
+  trust assumptions has not earned the confidentiality.</p>
+
+  <h3>7.1 What remains trusted</h3>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:26%">Assumption</th><th style="width:37%">What could go wrong</th><th>What bounds it</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Committed leaves describe real loans</td>
+        <td>An originator commits fictional positions</td>
+        <td>Claimed principal can never exceed cash the chain watched leave the vault. Fiction costs real money, publicly.</td>
+      </tr>
+      <tr>
+        <td>Repayments route on-chain</td>
+        <td>A servicer collects fiat and does not forward it</td>
+        <td>The forward calendar is missed within one period, in public. Eligibility for the vault requires an on-chain repayment rail.</td>
+      </tr>
+      <tr>
+        <td>The verification agent is honest</td>
+        <td>A captured auditor signs clean findings</td>
+        <td>Attestations are on-chain and dated. A silent agent is as visible as a lying one, and the appointment is a public role a Horizen-appointed party can hold.</td>
+      </tr>
+      <tr>
+        <td>Book revisions are honest deltas</td>
+        <td>A new root inserts a backdated bad loan</td>
+        <td>Proven, not trusted. The revision circuit refuses it, against a commitment timestamp read from the chain rather than supplied by the originator.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>7.2 The gap we closed</h3>
+
+  <p>An earlier draft of this document named a gap here: a book revision published a new root,
+  and nothing proved that the new book was the old book plus permitted operations. An
+  originator could in principle have inserted a position with an older commitment timestamp,
+  bounded only by the disbursement ceiling.</p>
+
+  <p>That gap is closed by the revision circuit in <a href="#s4-4">Section 4.4</a>, which is
+  deployed and verified on-chain rather than scheduled. The backdating attempt it refuses is
+  built on every run of the proving script, and a proof that succeeds is treated as a build
+  failure.</p>
+
+  <p class="label">What remains open</p>
+
+  <p>The book is 64 slots per attestation batch. A larger originator needs either several
+  registries or a recursive aggregation over batches, which is engineering rather than
+  research, but it is not built. The verifier also sits 2,513 bytes below the contract size
+  limit, so growing the disclosed field set is not free.</p>
+
+  <h3>7.3 What we do not claim</h3>
+
+  <p><strong>The book behind every figure in this document is synthetic</strong>, generated by
+  <code>zk/gen.py</code>. There is no real originator, no real borrower and no real collection
+  behind the testnet numbers. What is demonstrated is that the machinery works and refuses what
+  it says it refuses. Putting a real book behind it is milestone M1.</p>
+
+  <p>We also cannot make a depositor able to underwrite this credit, and we will not pretend
+  otherwise. Someone with full access to the book still has to do that work. The claim is
+  narrower: a depositor can verify the risk shape, watch performance as a falsifiable series on
+  a clock the originator committed to in advance, see that an independent party with full
+  access is looking on a fixed cadence, exit through a public queue with no first-mover
+  advantage, and know that the originator loses first.</p>
+
+  <p>That is the side letter, moved on-chain, where a contract can read it.</p>
+
+
+<!-- ============================================ 8. RESULTS ============== -->
+
+  <h2 id="s8">8. Verification Results</h2>
+
+  <h3 id="s8-1">8.1 Live on Horizen Testnet</h3>
+
+  <p>The system described in this document is deployed and running on Horizen testnet, chain
+  2651420. Not a fork and not a simulation. The full disclosure cycle was executed on-chain:
+  the book committed before any cash moved, two risk surfaces and one revision proof verified
+  by the chain, a short collection recorded, and the redemption queue settled pro-rata.</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:32%">Contract</th><th>Address</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>CreditDisclosureRegistry</td><td><code>0x034635c324d83D590691C68d711AA5FA2FbA084f</code></td></tr>
+      <tr><td>AgamaCreditVault</td><td><code>0x58b90F2aA6C48B19B8792Bf4a5dcd2437Ae8FfA9</code></td></tr>
+      <tr><td>HonkVerifier</td><td><code>0x57D463c6449eb25425D0137ca9E296A67c0486d1</code></td></tr>
+      <tr><td>DeltaVerifier</td><td><code>0xBD913f10e18C32b7c035f920B95CB24eE4B2acA9</code></td></tr>
+      <tr><td>Test stablecoin</td><td><code>0x3552C44aec2A9976ec49F595901cA14DFB3860ac</code></td></tr>
+    </tbody>
+  </table>
+
+  <p>All five are source-verified on the Horizen explorer. The code running at
+  those addresses can be read by anyone, and <code>deployment/read-state.sh</code>
+  dumps the entire public surface using nothing but <code>eth_call</code>. Every
+  transaction hash behind this section is in
+  <code>deployment/deployment-testnet.md</code> and
+  <code>deployment/act2-testnet.md</code>.</p>
+
+  <p>Anyone can read the following from the registry today, without asking us for anything:</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:44%">Reading</th><th>Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Positions, outstanding principal</td><td>22, 4,760,000 USDC</td></tr>
+      <tr><td>Maturity ladder, 30 / 90 / 180 / 365 / beyond</td><td>190k / 660k / 995k / 1,530k / 1,385k</td></tr>
+      <tr><td>Delinquent, current / 1-30 / 31-60 / 61-90 / 90+</td><td>3,835k / 540k / 275k / 0 / 110k</td></tr>
+      <tr><td>Largest single obligor</td><td>1,050,000 USDC, 22.06 percent</td></tr>
+      <tr><td>Impairment, mechanical</td><td>246,500 USDC</td></tr>
+      <tr><td>Carrying value</td><td>4,513,500 USDC</td></tr>
+      <tr><td><strong>Epoch 0 scheduled</strong></td><td><strong>33,487.50 USDC</strong></td></tr>
+      <tr><td><strong>Epoch 0 realised</strong></td><td><strong>12,000.00 USDC</strong></td></tr>
+      <tr><td><strong>Epoch 0 performance</strong></td><td><strong>35.83 percent</strong></td></tr>
+      <tr><td>First loss remaining</td><td>253,500 of 500,000 USDC</td></tr>
+      <tr><td>Book revisions committed</td><td>2, the second proven to descend from the first</td></tr>
+    </tbody>
+  </table>
+
+  <p>The three bold rows are the whole argument reduced to three numbers. The book published
+  what it was owed before the period began, the cash that arrived is an on-chain fact, and the
+  ratio between them is a figure nobody had to agree to.</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:52%">Operation, on testnet</th><th>Gas</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>publishSurface</code>, risk surface with ZK verification</td><td>2,364,725</td></tr>
+      <tr><td><code>commitRevision</code>, revision delta with ZK verification</td><td>2,222,133</td></tr>
+      <tr><td><code>publishSurface</code>, deteriorated surface</td><td>2,192,539</td></tr>
+      <tr><td><code>settle</code>, redemption queue</td><td>135,433</td></tr>
+      <tr><td><code>commitBook</code></td><td>115,022</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>The whole deployment plus the full cycle, including three on-chain UltraHonk
+    verifications, cost 0.000000027 ETH.</strong> Continuous disclosure is not a cost problem
+    on this chain. It is a design choice we can simply make.
+  </div>
+
+  <p class="label">Independent verification and a real queue</p>
+
+  <p>The verification agent has recorded an attestation on-chain, so
+  <code>attestationCount()</code> reads 1 and <code>verificationAge()</code>
+  counts up from it. Four depositors then settled in one transaction, sizes
+  spanning twenty to one, with the founding depositor first in line since a
+  previous settlement and the other three joining afterwards:</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:26%">Party</th><th>Queue position</th><th>Asked</th><th>Received</th><th>Fill</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Founding LP</td><td><strong>first</strong>, much earlier</td><td>2,010,000.00</td><td>462,068.97</td><td><strong>22.989 %</strong></td></tr>
+      <tr><td>LP1</td><td>later</td><td>100,000.00</td><td>22,988.51</td><td><strong>22.989 %</strong></td></tr>
+      <tr><td>LP2</td><td>later</td><td>200,000.00</td><td>45,977.01</td><td><strong>22.989 %</strong></td></tr>
+      <tr><td>LP3</td><td>later</td><td>300,000.00</td><td>68,965.52</td><td><strong>22.989 %</strong></td></tr>
+    </tbody>
+  </table>
+
+  <p>Identical to three decimal places. The residual difference is integer
+  rounding on a six-decimal asset, not an ordering advantage. This is the claim
+  in <a href="#s6">Section 6</a>, executed on a public chain rather than asserted
+  in a test.</p>
+
+  <p class="label">Attacks refused on-chain, with hashes</p>
+
+  <p>Ten attacks were submitted to the chain as real transactions and mined as
+  reverts. Each revert selector was recovered by replaying the call at the block
+  before it was mined. Tampered public inputs are rejected inside the verifier;
+  stale surfaces by monotonicity; replayed and mis-parented revisions by the
+  descent check; a false previous-commitment date by the value the chain itself
+  recorded; principal without disbursement by the ceiling; and the queue is not
+  bypassable through <code>redeem</code>.</p>
+
+  <div class="callout">
+    <strong>Two of those first carried the wrong label, and we corrected them.</strong>
+    The registry checks in ascending order of cost, so a tampered surface with an
+    old valuation date is rejected by monotonicity before the proof is examined,
+    and a revision quoting the wrong parent never reaches the timestamp check. We
+    reran both, shaped to pass the cheap guards and reach the intended one, and
+    rewrote the table to say what happened rather than what we meant to show.
+    Ordering cheap checks first is correct. Reporting a refusal as coming from a
+    mechanism that never ran is not.
+  </div>
+
+  <h3 id="s8-2">8.2 Test Suite</h3>
+
+  <p>Thirty tests, in <code>contracts/test/</code>. Seven run the disclosure cycle against a
+  live fork of Horizen mainnet, chain 26514. Seventeen attack the design rather than demonstrate it. Six are stateful invariants
+  driven by randomised traffic.</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:38%">Test</th><th>What it establishes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>FullDisclosureCycle</code></td><td>Commit, fund, disburse, prove, mark. NAV derived from the proof, not asserted.</td></tr>
+      <tr><td><code>BadBookFailsItsOwnCalendar</code></td><td>The reviewer's case. The proof passes, the calendar is missed at 35.83 percent, first loss is consumed, the share price falls to 0.9915 mechanically.</td></tr>
+      <tr><td><code>RejectsUncommittedAndBackdatedBooks</code></td><td>A surface against an uncommitted root reverts. A surface predating its own commitment reverts.</td></tr>
+      <tr><td><code>QueueIsProRataAndPublic</code></td><td>Two LPs, one block apart, receive an identical fill ratio. Coverage is published before the shortfall binds.</td></tr>
+      <tr><td><code>VerifierAccessIsPublic</code></td><td>Attestation age is unbounded until someone looks, then zero, then grows visibly.</td></tr>
+      <tr><td><code>PureFiIsLiveOnHorizen</code></td><td>The live verifier has code and an invalid payload reverts the deposit.</td></tr>
+      <tr><td><code>ReportLiveChainCosts</code></td><td>Chain 26514, gas price 1,000,764 wei, USDC.e supply 3,166.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="label">Attacks attempted, and refused</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:42%">Attack</th><th>Outcome</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Understate delinquency, overstate principal, or backdate the valuation date in the public inputs</td><td>Verification fails on-chain. The untouched proof still works, so the rejection is the tampering and not something unrelated.</td></tr>
+      <tr><td>Re-point a valid proof at a different committed book</td><td>Rejected.</td></tr>
+      <tr><td>Re-publish an older surface to walk back a disclosed deterioration</td><td><code>SurfaceNotMonotonic</code>.</td></tr>
+      <tr><td>Fork a revision off an old root, or replay one</td><td><code>NotDescendedFromLatest</code>.</td></tr>
+      <tr><td>Feed the circuit a false previous-commitment timestamp</td><td><code>WrongCommitTimestamp</code>. The chain supplies that value, not the originator.</td></tr>
+      <tr><td>Claim principal no disbursement paid for</td><td><code>PrincipalExceedsDisbursed</code>.</td></tr>
+      <tr><td>Salami-slice the vault below its reserve floor</td><td>Refused. The floor base does not move when cash shifts into the book.</td></tr>
+      <tr><td>ERC-4626 first-depositor inflation attack</td><td>Uneconomic. The attacker burns 10,000 USDC and the victim redeems 9,999 of their 10,000.</td></tr>
+      <tr><td>Gain from queueing early, 40 tickets spanning two orders of magnitude</td><td>Every ticket filled at 17.15 percent. Position buys nothing.</td></tr>
+      <tr><td>Bypass the queue through <code>redeem</code> or <code>withdraw</code></td><td>Both revert. <code>maxRedeem</code> is zero by design.</td></tr>
+      <tr><td>Cancel someone else's ticket, or over-claim a partial fill</td><td>Refused. The remainder is returned to the unit.</td></tr>
+      <tr><td>Raise the disbursement ceiling without moving cash</td><td><code>NotVault</code>.</td></tr>
+      <tr><td>Censor a disclosure by withholding it</td><td>Not possible. <code>publishSurface</code> is permissionless: anyone holding a valid proof can publish it.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="label">Stateful invariants</p>
+
+  <p>Randomised deposits, redemption requests, cancellations, settlements and share transfers
+  across 4,096 calls. Escrowed shares always equal the queue total; the queue total always
+  equals the sum of open tickets one by one; queued shares never exceed supply; first-loss
+  capital is never spent; no redemption creates value.</p>
+
+
+<!-- ============================================ 9. PHASE 2 ============== -->
+
+  <h2 id="s9">9. Phase 2, Vela Integration</h2>
+
+  <p>Vela is the right destination and the wrong prerequisite. Phase 2 upgrades a system
+  already in production rather than replacing a promise with another one.</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:30%">Change</th><th>What it buys</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Book state moves into the enclave</td><td>Aggregates are computed inside the TEE rather than proven off-chain, removing the proving step from the originator's critical path.</td></tr>
+      <tr><td>Verification agent becomes a Vela authority</td><td>Book access happens through <code>DEANONYMIZATION</code>, so the access request is itself an on-chain transaction rather than an off-chain arrangement we describe.</td></tr>
+      <tr><td>Custom <code>IAuthorityChecker</code></td><td>The rule for who may look becomes a contract: for example, access only while an attestation is current, or only with a quorum of agents.</td></tr>
+      <tr><td>Trigger contract drives the vault</td><td><code>TRUSTPROCESS</code> lets enclave state push directly into the vault's accounting without an external relayer.</td></tr>
+    </tbody>
+  </table>
+
+  <p>Phase 2 is gated on Vela reaching a shared testnet with real Nitro attestation. Until
+  then, none of the above is on the critical path, and the Phase 1 system runs on Horizen
+  mainnet without it.</p>
+
+
+<!-- ============================================ 10. MILESTONES ========== -->
+
+  <h2 id="s10">10. Milestones</h2>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:9%">Stage</th><th style="width:34%">Deliverable</th><th>Acceptance</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>M0</td>
+        <td><strong>Done.</strong> Both circuits, both verifiers, registry and vault deployed to Horizen testnet, with the full disclosure cycle executed on-chain.</td>
+        <td>Delivered. Addresses and transaction hashes in <a href="#s8-1">Section 8.1</a>. Thirty tests, including the backdating refusal, in the repository.</td>
+      </tr>
+      <tr>
+        <td>M1</td>
+        <td>The same stack on Horizen mainnet with a real originator book, and a public dashboard reading the risk surface straight from the registry.</td>
+        <td>Contracts verified on the Horizen explorer. One committed book, one proven surface, one epoch of realised collections, all readable on-chain by a third party.</td>
+      </tr>
+      <tr>
+        <td>M2</td>
+        <td>Security audit of registry, vault and both circuits. Recursive aggregation so a book is not capped at 64 positions per batch.</td>
+        <td>Audit report published. A book of several hundred positions attested in one surface.</td>
+      </tr>
+      <tr>
+        <td>M3</td>
+        <td>Live book with real capital, continuous attestation, and a second originator adopting <code>IRiskSurface</code> independently of Agama.</td>
+        <td>Principal outstanding, uninterrupted attestation cadence, and at least one non-Agama implementation of the interface on Horizen.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The M3 acceptance criterion is deliberately one Agama does not fully control. A disclosure
+  standard that only its author uses is not a primitive, and Horizen should hold us to that.</p>
+
+  <p class="colophon">Agama Finance &middot; Confidential Credit on Horizen &middot;
+  September 2026 &middot; measurements taken 15 September 2026</p>
+</section>
+
+</div><!-- /.doc -->
+
+</body>
+</html>
