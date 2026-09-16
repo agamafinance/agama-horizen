@@ -35,6 +35,16 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
     ///      public condition, not a discretionary gate.
     uint256 public constant MAX_QUEUE = 256;
 
+    /// @notice Smallest redemption a ticket may carry, in asset units.
+    /// @dev    Without a floor on ticket size, anyone holding a trivial stake
+    ///         can split it into MAX_QUEUE dust tickets and lock every other
+    ///         holder out of the queue. Exit denial is cheaper to mount than
+    ///         any other attack on this design, so it gets an explicit guard.
+    uint256 public constant MIN_TICKET = 100e6;
+
+    /// @notice The reserve floor may be raised but never switched off.
+    uint16 public constant MIN_FLOOR_BPS = 500;
+
     CreditDisclosureRegistry public immutable registry;
 
     /// @notice Originator first-loss capital, escrowed here, junior to depositors.
@@ -49,10 +59,10 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
     ///         protects instead of being re-tuned by hand after every raise.
     uint16 public floorBps;
 
-    /// @notice Principal the vault has written off. Counted into the floor base
-    ///         because a write-down lowers recorded exposure with no cash
-    ///         moving, and a base the originator can lower is not a floor.
-    uint256 public writtenOff;
+    /// @notice First loss the originator must keep against exposure, in basis
+    ///         points. Set once at deployment and not adjustable.
+    uint16 public immutable minFirstLossBps;
+
 
     IPureFiVerifier public compliance;
 
@@ -66,20 +76,31 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
     uint256 public head;
     uint256 public queuedShares;
 
+    /// @notice Tickets still carrying shares. Counted rather than derived from
+    ///         head, so cancelling or fully settling a ticket in the middle of
+    ///         the queue frees its slot immediately.
+    uint256 public openTickets;
+
     event RedemptionRequested(address indexed owner, uint256 indexed ticketId, uint256 shares, uint256 queueDepth);
     event RedemptionSettled(uint256 indexed ticketId, address indexed owner, uint256 shares, uint256 assets);
     event SettlementRound(uint256 ratio, uint256 ticketsTouched, uint256 assetsPaid);
     event FirstLossPosted(address indexed from, uint256 amount, uint256 total);
+    event FirstLossReleased(address indexed to, uint256 amount, uint256 total);
     event Deployed(address indexed to, uint256 amount, bytes32 bookRoot);
     event FloorUpdated(uint16 oldBps, uint16 newBps);
 
     error QueueFull();
+    error TicketTooSmall(uint256 assets, uint256 minimum);
     error NothingQueued();
     error NotTicketOwner();
     error BookNotCommitted();
     error UndercollateralisedDeployment();
     error BreachesReserveFloor(uint256 wouldLeave, uint256 required);
+    error QueueNotEmpty(uint256 owed);
+    error FirstLossNotFree(uint256 asked, uint256 free);
+    error FirstLossBelowFloor(uint256 remaining, uint256 required);
     error FloorTooHigh();
+    error FloorTooLow(uint16 asked, uint16 minimum);
 
     constructor(IERC20 asset_, CreditDisclosureRegistry registry_, address admin)
         ERC4626(asset_)
@@ -87,11 +108,16 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
     {
         registry = registry_;
         floorBps = 1000; // 10 percent
+        minFirstLossBps = 500; // 5 percent of exposure, permanently junior
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
+    /// @dev A floor an admin can set to zero is not a floor. The lower bound is
+    ///      fixed at deployment so the parameter can be tuned upward without the
+    ///      key ever being able to switch the protection off.
     function setFloorBps(uint16 bps) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (bps > 10_000) revert FloorTooHigh();
+        if (bps < MIN_FLOOR_BPS) revert FloorTooLow(bps, MIN_FLOOR_BPS);
         emit FloorUpdated(floorBps, bps);
         floorBps = bps;
     }
@@ -113,9 +139,11 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
     /// @notice Liquid stablecoins the vault may not go below, in asset units.
     /// @dev    The base is assets under management, so moving cash from the
     ///         buffer into the book leaves it unchanged and the floor cannot be
-    ///         walked down by repeated partial deployments.
+    ///         walked down by repeated partial deployments. Impairment already
+    ///         flows into exposure() through the proven surface, so a
+    ///         deteriorating book raises the floor rather than lowering it.
     function reserveFloor() public view returns (uint256) {
-        return ((buffer() + exposure() + writtenOff) * floorBps) / 10_000;
+        return ((buffer() + exposure()) * floorBps) / 10_000;
     }
 
     // ------------------------------------------------------------------- NAV
@@ -157,6 +185,27 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
         IERC20(asset()).safeTransferFrom(msg.sender, address(this), amount);
         firstLoss += amount;
         emit FirstLossPosted(msg.sender, amount, firstLoss);
+    }
+
+    /// @notice Recover first-loss capital that impairment has not consumed and
+    ///         the queue does not need.
+    /// @dev    Capital that can never come back is capital no originator posts a
+    ///         second time. Release is bounded by three things a depositor can
+    ///         check: nothing impaired may leave, nothing owed to the queue may
+    ///         leave, and coverage may not fall below the floor it was sized at.
+    function releaseFirstLoss(uint256 amount) external onlyRole(ORIGINATOR_ROLE) nonReentrant {
+        uint256 free = firstLossRemaining();
+        uint256 owed = convertToAssets(queuedShares);
+        if (owed > 0) revert QueueNotEmpty(owed);
+        if (amount > free) revert FirstLossNotFree(amount, free);
+
+        uint256 remaining = firstLoss - amount;
+        uint256 required = (exposure() * minFirstLossBps) / 10_000;
+        if (remaining < required) revert FirstLossBelowFloor(remaining, required);
+
+        firstLoss = remaining;
+        IERC20(asset()).safeTransfer(msg.sender, amount);
+        emit FirstLossReleased(msg.sender, amount, firstLoss);
     }
 
     /// @notice Disburse against a book root that is already committed.
@@ -215,12 +264,15 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
     /// @notice Join the public exit queue. The request, its size and its place
     ///         are on-chain the moment it is made.
     function requestRedeem(uint256 shares) external nonReentrant returns (uint256 ticketId) {
-        if (_queue.length - head >= MAX_QUEUE) revert QueueFull();
+        if (openTickets >= MAX_QUEUE) revert QueueFull();
+        uint256 value = convertToAssets(shares);
+        if (value < MIN_TICKET) revert TicketTooSmall(value, MIN_TICKET);
         _transfer(msg.sender, address(this), shares);
         ticketId = _queue.length;
         _queue.push(Ticket({owner: msg.sender, shares: uint128(shares), requestedAt: uint64(block.timestamp)}));
         queuedShares += shares;
-        emit RedemptionRequested(msg.sender, ticketId, shares, _queue.length - head);
+        ++openTickets;
+        emit RedemptionRequested(msg.sender, ticketId, shares, openTickets);
     }
 
     /// @notice Settle the whole open queue at one ratio for everyone.
@@ -246,6 +298,7 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
 
             t.shares -= uint128(payShares);
             queuedShares -= payShares;
+            if (t.shares == 0) --openTickets;
             _burn(address(this), payShares);
             IERC20(asset()).safeTransfer(t.owner, assets);
             paid += assets;
@@ -265,8 +318,10 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
         Ticket storage t = _queue[ticketId];
         if (t.owner != msg.sender) revert NotTicketOwner();
         uint256 shares = t.shares;
+        if (shares == 0) return;
         t.shares = 0;
         queuedShares -= shares;
+        --openTickets;
         _transfer(address(this), msg.sender, shares);
     }
 
@@ -281,7 +336,7 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
     // -------------------------------------------------------- public signals
 
     function queueDepth() external view returns (uint256) {
-        return _queue.length - head;
+        return openTickets;
     }
 
     function queuedAssets() external view returns (uint256) {
