@@ -392,19 +392,6 @@
   chain with L1 gas prices the arithmetic reverses, and the same consumer contract works
   there.</p>
 
-  <p class="label">Three traps, which cost more than the integration</p>
-
-  <table class="bold-first">
-    <thead>
-      <tr><th style="width:38%">What bites</th><th>What it looks like</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>bb 0.87 is rejected, you need bb 0.84</td><td>The pallet's <code>V0_84</code> variant is tied to that serialisation. A later proof verifies locally against its own key and is refused on chain with <em>Provided data has not valid proof</em>. The sizes differ, 15,712 bytes against 16,224</td></tr>
-      <tr><td>The vk hash is not keccak256 of the vk bytes</td><td>The pallet hashes the SCALE-encoded versioned enum, discriminant and length prefix included. The naive hash yields a leaf that is in no tree, silently. Take it from <code>session.getVkHash</code></td></tr>
-      <tr><td>The statement has four components, not three</td><td><code>sha256("ultrahonk:v0.84")</code> sits between the vk hash and the public inputs. We found it in <code>pallets/verifiers/src/lib.rs</code> after none of sixteen readings of the documented formula reproduced the statement zkVerify had just returned</td></tr>
-    </tbody>
-  </table>
-
   <div class="callout">
     <strong>One hop is not real, and it is named rather than buried.</strong> The aggregation
     root was copied from Volta to Base Sepolia by hand and sits in a stand-in contract rather

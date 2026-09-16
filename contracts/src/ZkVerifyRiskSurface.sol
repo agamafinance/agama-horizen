@@ -33,12 +33,10 @@ contract ZkVerifyRiskSurface {
     /// @dev zkVerify identifies the proving system by hashing its name.
     bytes32 public constant PROVING_SYSTEM_ID = keccak256("ultrahonk");
 
-    /// @dev sha256("ultrahonk:v0.84"), the pallet's hash for the proof version.
-    ///      The published documentation describes the statement as three parts,
-    ///      context, vk and public inputs. The pallet hashes four: this version
-    ///      hash sits between the vk and the inputs. Omitting it produces a leaf
-    ///      that is wrong in a way nothing tells you about, so it is pinned here
-    ///      against a statement zkVerify actually returned.
+    /// @dev sha256("ultrahonk:v0.84"). The pallet folds a version hash into the
+    ///      statement between the vk hash and the public inputs, so it is pinned
+    ///      here and the whole formula is tested against a statement zkVerify
+    ///      returned rather than against a reimplementation of it.
     ///      Source: verifiers/ultrahonk/src/lib.rs, verifier_version_hash.
     bytes32 public constant VERSION_HASH_V0_84 =
         0x4966cd7801ae9ef9d7afb52ec3de92f0693e720f58c5c8ecfb23d85b0934f018;
@@ -47,13 +45,10 @@ contract ZkVerifyRiskSurface {
     IZkVerifyAggregation public immutable zkVerify;
 
     /// @notice keccak256 over the SCALE-encoded versioned verification key.
-    /// @dev    Not keccak256 of the raw vk bytes: the pallet hashes
-    ///         `VersionedVk::encode()`, which carries the enum discriminant and a
-    ///         length prefix. The two differ, and the naive one silently produces
-    ///         a leaf that is never in any tree. Take this value from zkVerify's
-    ///         own RPC, `session.getVkHash`, rather than computing it.
-    ///         Binding it at deployment is what stops a valid proof of a
-    ///         different statement being presented here.
+    /// @dev    Take this from zkVerify's own RPC, `session.getVkHash`. It hashes
+    ///         the SCALE-encoded versioned key rather than the raw bytes, so the
+    ///         two differ. Binding it at deployment is what stops a valid proof
+    ///         of a different statement being presented here.
     bytes32 public immutable vkHash;
 
     /// @notice The zkVerify domain our proofs are aggregated in.
@@ -81,9 +76,8 @@ contract ZkVerifyRiskSurface {
     ///         order, each a big-endian 32-byte word, concatenated with no
     ///         separator and no length prefix.
     ///
-    ///         This is checked against a statement zkVerify returned for a real
-    ///         submission rather than against the documentation, which describes
-    ///         three components where the code hashes four.
+    ///         Checked against a statement zkVerify returned for a real
+    ///         submission, which is the only way to know the encoding is right.
     function leafFor(bytes32[] calldata publicInputs) public view returns (bytes32) {
         if (publicInputs.length != 17) revert WrongPublicInputCount();
         return keccak256(

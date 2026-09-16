@@ -60,9 +60,8 @@ if [ "${1:-}" = "--zkverify" ]; then
   # transcript. Same circuit and same witness as above, so the statement is
   # identical to the one the registry verifies directly on Horizen.
   echo "== zkVerify artefacts, zk flavour, bb 0.84 =="
-  # The pallet's V0_84 variant is tied to bb 0.84's serialisation. A proof from
-  # a later bb verifies locally and is still rejected on chain with "Provided
-  # data has not valid proof", which is an unhelpful way to learn this. The two
+  # The pallet's V0_84 variant is tied to bb 0.84's serialisation, so a proof
+  # from a later bb verifies locally and is still rejected on chain. The two
   # differ in size, 15,712 bytes against 16,224, which is the quickest tell.
   BB084="${BB084:-$HOME/.bb/bb-0.84}"
   if [ ! -x "$BB084" ]; then
