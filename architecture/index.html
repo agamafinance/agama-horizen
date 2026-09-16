@@ -82,7 +82,6 @@
       </ul>
     </li>
     <li><a href="#s9">9. Phase 2, Vela Integration</a></li>
-    <li><a href="#s10">10. Milestones</a></li>
   </ul>
 </section>
 
@@ -1011,42 +1010,7 @@ if (maxCommittedTs &gt; committedAt) revert LeafBackdated();</code></pre>
   mainnet without it.</p>
 
 
-<!-- ============================================ 10. MILESTONES ========== -->
-
-  <h2 id="s10">10. Milestones</h2>
-
-  <table class="bold-first">
-    <thead>
-      <tr><th style="width:9%">Stage</th><th style="width:34%">Deliverable</th><th>Acceptance</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>M0</td>
-        <td><strong>Done.</strong> Both circuits, both verifiers, registry and vault deployed to Horizen testnet, with the full disclosure cycle executed on-chain.</td>
-        <td>Delivered. Addresses and transaction hashes in <a href="#s8-1">Section 8.1</a>. Thirty tests, including the backdating refusal, in the repository.</td>
-      </tr>
-      <tr>
-        <td>M1</td>
-        <td>The same stack on Horizen mainnet with a real originator book, and a public dashboard reading the risk surface straight from the registry.</td>
-        <td>Contracts verified on the Horizen explorer. One committed book, one proven surface, one epoch of realised collections, all readable on-chain by a third party.</td>
-      </tr>
-      <tr>
-        <td>M2</td>
-        <td>Security audit of registry, vault and both circuits. Recursive aggregation so a book is not capped at 64 positions per batch.</td>
-        <td>Audit report published. A book of several hundred positions attested in one surface.</td>
-      </tr>
-      <tr>
-        <td>M3</td>
-        <td>Live book with real capital, continuous attestation, and a second originator adopting <code>IRiskSurface</code> independently of Agama.</td>
-        <td>Principal outstanding, uninterrupted attestation cadence, and at least one non-Agama implementation of the interface on Horizen.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p>The M3 acceptance criterion is deliberately one Agama does not fully control. A disclosure
-  standard that only its author uses is not a primitive, and Horizen should hold us to that.</p>
-
-  <p class="colophon">Agama Finance &middot; Confidential Credit on Horizen &middot;
+<p class="colophon">Agama Finance &middot; Confidential Credit on Horizen &middot;
   September 2026 &middot; measurements taken 15 September 2026</p>
 </section>
 
