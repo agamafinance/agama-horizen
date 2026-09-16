@@ -14,6 +14,11 @@ import {AgamaCreditVault} from "../src/AgamaCreditVault.sol";
 contract AdversarialTest is Test {
     address constant USDCE = 0xDF7108f8B10F9b9eC1aba01CCa057268cbf86B6c;
 
+    /// @dev Pinned so the suite is deterministic and Foundry caches the fork
+    ///      locally after the first run. Without a pin every run refetches
+    ///      state from the public RPC and a timeout fails the whole suite.
+    uint256 constant FORK_BLOCK = 26_170_000;
+
     uint64 constant AS_OF_0 = 1789500000;
     uint64 constant AS_OF_1 = AS_OF_0 + 30 days;
     uint64 constant PREV_COMMIT_TS = AS_OF_0 - 1 days;
@@ -32,7 +37,7 @@ contract AdversarialTest is Test {
     address rail = makeAddr("rail");
 
     function setUp() public {
-        vm.createSelectFork(vm.envOr("HORIZEN_RPC", string("https://horizen.calderachain.xyz/http")));
+        vm.createSelectFork(vm.envOr("HORIZEN_RPC", string("https://horizen.calderachain.xyz/http")), FORK_BLOCK);
         verifier = new HonkVerifier();
         deltaVerifier = new DeltaVerifier();
         registry = new CreditDisclosureRegistry(
