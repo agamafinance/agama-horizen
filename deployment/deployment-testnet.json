@@ -1,11 +1,11 @@
 {
-  "testUSDC": "0x3552C44aec2A9976ec49F595901cA14DFB3860ac",
-  "honkVerifier": "0x57D463c6449eb25425D0137ca9E296A67c0486d1",
-  "deltaVerifier": "0xBD913f10e18C32b7c035f920B95CB24eE4B2acA9",
-  "registry": "0x034635c324d83D590691C68d711AA5FA2FbA084f",
-  "vault": "0x58b90F2aA6C48B19B8792Bf4a5dcd2437Ae8FfA9",
-  "genesisRoot": "0x1125cb61ab39eab9f1bfac79011f6a2ec5cccdc349b6cae2dd440ed304b200ba",
-  "epochGenesis": "1789506113",
+  "testUSDC": "0xd0c379C0cD56b62fd9c2fE8913aa261f8096164e",
+  "honkVerifier": "0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA",
+  "deltaVerifier": "0xA3C1e81Fdadb5bd098546A4B8FBDfe4169436cF4",
+  "registry": "0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B",
+  "vault": "0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651",
+  "genesisRoot": "0x02812c7cc03c1027534a5b4d5a75d0c3f8d5f8bdd70848d63eab57a467888a83",
+  "epochGenesis": "1789518394",
   "chainId": 2651420,
   "explorer": "https://horizen-testnet.explorer.caldera.xyz"
 }

@@ -214,10 +214,10 @@ end. Not a fork and not a simulation.
 
 | Contract | Address |
 | --- | --- |
-| CreditDisclosureRegistry | `0x034635c324d83D590691C68d711AA5FA2FbA084f` |
-| AgamaCreditVault | `0x58b90F2aA6C48B19B8792Bf4a5dcd2437Ae8FfA9` |
-| HonkVerifier | `0x57D463c6449eb25425D0137ca9E296A67c0486d1` |
-| DeltaVerifier | `0xBD913f10e18C32b7c035f920B95CB24eE4B2acA9` |
+| CreditDisclosureRegistry | `0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B` |
+| AgamaCreditVault | `0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651` |
+| HonkVerifier | `0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA` |
+| DeltaVerifier | `0xA3C1e81Fdadb5bd098546A4B8FBDfe4169436cF4` |
 
 The cycle that ran on-chain: book committed before any cash moved, vault funded,
 first loss posted, 4.76 M disbursed, risk surface proven and verified, a short
@@ -226,9 +226,9 @@ the deteriorated surface published, queue settled pro-rata.
 
 | Operation | Gas on testnet |
 | --- | ---: |
-| `publishSurface` with UltraHonk verification | 2,364,725 |
-| `commitRevision` with delta verification | 2,222,133 |
-| `publishSurface`, revised surface | 2,192,539 |
+| `publishSurface` with UltraHonk verification | 2,364,745 |
+| `commitRevision` with delta verification | 2,222,038 |
+| `publishSurface`, revised surface | 2,192,403 |
 | `settle` | 135,433 |
 
 **The whole deployment plus the full cycle cost 0.000000027 ETH.**
