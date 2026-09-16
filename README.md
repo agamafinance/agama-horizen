@@ -1,7 +1,6 @@
 # Agama x Horizen
 
 **Technical follow-up to our Builder Ecosystem Fund application.**
-Complementary apps pool, $88,000 requested, submitted 4 September 2026.
 
 ---
 
