@@ -258,23 +258,46 @@
   on-chain transaction that everyone can see</strong>. Requests from an unauthorised address
   revert with <code>AuthorityNotAllowed</code>, which we confirmed.</p>
 
-  <p class="label">The blocking constraint</p>
+  <p class="label">Where Vela actually is, because two Horizen pages disagree</p>
 
-  <p>Horizen's own limitations page states that Vela &ldquo;is not yet deployed to any testnet
-  or mainnet environment&rdquo; and that the development environment &ldquo;uses an emulated
-  Trusted Execution Environment rather than hardware enclaves&rdquo;. The local stack confirms
-  it: <code>TEE_NO_ATTESTATION=true</code>, and all three enclave keys (AES state key,
-  secp256k1 signing key, P-521 communication key) sit in plaintext in the shipped
-  <code>.env.dev</code>.</p>
+  <p><code>docs.horizen.io/vela/limitations</code> states that Vela &ldquo;is not yet deployed
+  to any testnet or mainnet environment&rdquo; and that the development environment &ldquo;uses
+  an emulated Trusted Execution Environment rather than hardware enclaves&rdquo;. The local
+  stack matches that description: <code>TEE_NO_ATTESTATION=true</code>, and all three enclave
+  keys sit in plaintext in the shipped <code>.env.dev</code>.</p>
+
+  <p>The product's own page says something different, and more favourable. Vela launched
+  publicly on 16 March 2026 and is <strong>&ldquo;live on Base Sepolia for early-access
+  developers&rdquo;</strong>, with a first roadmap phase listed in this order:</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:8%">Step</th><th>Horizen Labs' own wording</th><th style="width:16%">Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>&ldquo;Live on Base Sepolia for early-access developers&rdquo;</td><td>done</td></tr>
+      <tr><td>2</td><td>&ldquo;Promote to Base mainnet&rdquo;</td><td>ahead</td></tr>
+      <tr><td>3</td><td><strong>&ldquo;Deploy to Horizen testnet and mainnet&rdquo;</strong></td><td>ahead</td></tr>
+    </tbody>
+  </table>
+
+  <p>Alongside it: &ldquo;Vela is open to developers now. Tell us what you're building and
+  we'll get you into an environment.&rdquo;</p>
 
   <div class="callout">
-    <strong>Consequence for this design.</strong> In September 2026 a Vela dependency cannot
-    sit on the critical path of a mainnet product, because the hardware guarantee it will
-    eventually provide does not yet exist. Phase 1 therefore uses no Vela. Confidentiality
-    comes from Merkle commitments and zero-knowledge proofs verified on Horizen mainnet today.
-    Vela is an upgrade to a working system (<a href="#s9">Section 9</a>), not a promise
-    standing in for one.
+    <strong>The accurate statement is narrower than the limitations page implies.</strong>
+    Vela is deployed, on Base Sepolia, to developers who ask for access. What does not exist
+    yet is Vela <em>on Horizen</em>, and that is step three of Horizen's own first phase rather
+    than an open question. The emulated enclave and the plaintext keys are properties of the
+    local development stack, not of the hosted environment.
   </div>
+
+  <p>We could not confirm the Base Sepolia deployment on-chain, because no addresses are
+  published for it, and the disagreement between the two pages is worth putting to them
+  directly. What follows from it for this design is narrow: Vela stays off the Phase 1 critical
+  path, because a dependency that is live on a different chain than ours is still one we cannot
+  ship against today. It does not reduce what Phase 2 is worth, and it makes Phase 2 a bet on a
+  roadmap item Horizen has already committed to in public.</p>
 
   <p class="label">What Vela makes public, by design</p>
 
@@ -335,7 +358,7 @@
       <tr><td>On-chain ZK verification</td><td>2,178,509 gas on a mainnet fork, 2,364,745 live on testnet</td><td><span class="pill">Yes</span></td></tr>
       <tr><td>Stork oracle</td><td>Live</td><td class="no">Not needed</td></tr>
       <tr><td>zkVerify</td><td>Live, not deployed on Horizen L3</td><td class="no">No</td></tr>
-      <tr><td>Vela TEE</td><td>Closed beta, local Docker, no attestation</td><td class="no">Phase 2</td></tr>
+      <tr><td>Vela TEE</td><td>Live on Base Sepolia for early-access developers, not yet on Horizen</td><td class="no">Phase 2</td></tr>
     </tbody>
   </table>
 
@@ -1129,15 +1152,15 @@ if (maxCommittedTs &gt; committedAt) revert LeafBackdated();</code></pre>
 
   <h3>9.3 What Gates It</h3>
 
-  <p>Phase 2 is gated on Vela reaching a shared testnet with real Nitro attestation. Until then
-  none of the above is on the critical path, and the Phase 1 system runs on Horizen mainnet
-  without it.</p>
+  <p>Phase 2 is gated on one specific item: <strong>&ldquo;Deploy to Horizen testnet and
+  mainnet&rdquo;</strong>, step three of Vela's own first roadmap phase. Vela itself is already
+  live on Base Sepolia for early-access developers, so this is not a bet on whether the
+  technology arrives, only on when it reaches this chain.</p>
 
   <p>It is worth stating the dependency plainly rather than as a hedge. We have run the Vela
-  primitive that Phase 2 needs and confirmed it does what it claims. What we cannot do is
-  deploy it, and that is a fact about the platform's roadmap rather than about our design. An
-  application that is waiting on Vela is also an application that gives Vela a reason to
-  ship.</p>
+  primitive that Phase 2 needs, locally and end to end, and confirmed it does what it claims.
+  What we cannot yet do is run it here. An application waiting on step three is also the
+  clearest argument for scheduling step three.</p>
 
 
 <p class="colophon">Agama Finance &middot; Confidential Credit on Horizen &middot;

@@ -79,9 +79,12 @@ authority, can pull the private state, and **the act of pulling it is an
 on-chain transaction that everyone can see**. That is the mechanism the whole
 architecture hangs off.
 
-### The blocking constraint
+### Where Vela actually is, because two Horizen pages disagree
 
-Horizen's own limitations page states it plainly:
+This took some untangling, and the answer is more favourable than the
+documentation alone suggests.
+
+**`docs.horizen.io/vela/limitations` says:**
 
 > "VELA is not yet deployed to any testnet or mainnet environment. All
 > development and testing happens locally using Docker."
@@ -99,12 +102,36 @@ EXECUTOR_FIXED_COMMUNICATION_KEY='00b2df45d29db7b6a314100cbff4abde8106254204205e
 EXECUTOR_FIXED_STATE_KEY='74ffca703f8c04292a849bfc7c6389f4e193ac13300896a74c319753c2f1f66a'
 ```
 
-**Conclusion: in September 2026 a Vela dependency cannot sit on the critical
-path of a mainnet product.** Anyone claiming a hardware trust guarantee from
-Vela today is claiming something the software does not yet provide. The
-architecture in this repo therefore treats Vela as a Phase 2 upgrade, not a
-Phase 1 prerequisite, and ships its confidentiality on commitments and proofs
-that work on Horizen mainnet now.
+**But `horizenlabs.io/vela`, the product's own page, says otherwise.** Vela
+launched publicly on 16 March 2026 and is:
+
+> "Live on Base Sepolia for early-access developers"
+
+with a first roadmap phase listed in this order:
+
+> "Live on Base Sepolia for early-access developers" &rarr; "Promote to Base
+> mainnet" &rarr; **"Deploy to Horizen testnet and mainnet"**
+
+and an open door:
+
+> "Vela is open to developers now. Tell us what you're building and we'll get you
+> into an environment."
+
+**So the accurate statement is narrower than the limitations page implies.** Vela
+is deployed, on Base Sepolia, to developers who ask. What does not exist yet is
+Vela **on Horizen**, and that is item three of Horizen's own first phase rather
+than an open research question. The emulated enclave and the plaintext keys are
+properties of the local development stack, not of the hosted environment.
+
+We could not verify the Base Sepolia deployment on-chain, because no contract
+addresses are published for it. That is a question to put to them directly, and
+the disagreement between their two pages is worth raising on its own.
+
+**What this changes for the design.** Vela stays off the Phase 1 critical path,
+because a dependency that is live on a different chain than ours is still a
+dependency we cannot ship against today. It does not change what Phase 2 is
+worth, and it makes the Phase 2 plan a bet on a roadmap item Horizen has already
+committed to publicly rather than on a component that might never arrive.
 
 ### What Vela leaks, by design
 
@@ -150,6 +177,12 @@ zkVerify is live as its own L1 and its EVM contracts are deployed on Base,
 Sepolia, Base Sepolia, Arbitrum Sepolia, Optimism Sepolia and EDU Chain
 Testnet. **Not on Horizen L3.** Consuming a zkVerify aggregation from a Horizen
 contract would need a relayer that Horizen does not currently run.
+
+This is a deployment gap rather than a technical one. zkVerify is a Horizen Labs
+product and Horizen is a Horizen Labs chain, so putting the verifier contract on
+Horizen and routing a relayer to it is work they can schedule, not work anyone
+has to invent. It has presumably not happened because nobody on Horizen has
+needed it yet.
 
 More to the point, zkVerify's value proposition is cost: it exists because
 verifying a proof on Ethereum L1 costs 200,000 to 300,000 gas at L1 gas prices.
@@ -251,7 +284,7 @@ Transaction hashes: `deployment/deployment-testnet.md`.
 | Stork oracle | Live | Yes, not needed at Phase 1 |
 | Direct on-chain ZK verification | Measured, 2.18 M gas, 0.0065 USD | **Yes** |
 | zkVerify | Live, but not deployed on Horizen L3 | No |
-| Vela TEE | Closed beta, local Docker only, no attestation | **No** |
+| Vela TEE | Live on Base Sepolia for early-access developers, not yet on Horizen | Phase 2 |
 
 **A confidential credit vault is buildable on Horizen mainnet today, provided
 its confidentiality comes from commitments plus proofs rather than from Vela.**
