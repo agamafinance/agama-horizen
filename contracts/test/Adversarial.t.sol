@@ -412,12 +412,147 @@ contract AdversarialTest is Test {
     function test_CannotCancelSomeoneElsesTicket() public {
         _bootstrap();
         vm.warp(AS_OF_0 + 2 days);
+        uint256 sh = vault.convertToShares(1_000e6);
         vm.prank(lp);
-        uint256 id = vault.requestRedeem(1_000e6);
+        uint256 id = vault.requestRedeem(sh);
 
         vm.prank(attacker);
         vm.expectRevert(AgamaCreditVault.NotTicketOwner.selector);
         vault.cancelRedeem(id);
+    }
+
+    // ============================ the six defects found by reviewing our own code
+
+    /// Collected borrower cash has exactly one destination, and getting it there
+    /// needs no privileged key. An admin who can choose where repayments go is a
+    /// custody risk wearing an operational hat.
+    function test_CollectedCashCanOnlyReachTheVault() public {
+        _bootstrap();
+        vm.startPrank(lp);
+        IERC20(USDCE).approve(address(registry), type(uint256).max);
+        registry.recordCollection(50_000e6);
+        vm.stopPrank();
+
+        assertEq(IERC20(USDCE).balanceOf(address(registry)), 50_000e6);
+        uint256 before_ = IERC20(USDCE).balanceOf(address(vault));
+
+        // No role required, and no destination to choose.
+        vm.prank(attacker);
+        registry.sweep();
+
+        assertEq(IERC20(USDCE).balanceOf(address(vault)) - before_, 50_000e6, "cash reached the vault");
+        assertEq(IERC20(USDCE).balanceOf(address(registry)), 0);
+    }
+
+    /// An originator can always wire its own money in to make a failing book
+    /// look like it is paying. That cannot be prevented, so it is made visible.
+    function test_SelfFundedCollectionsAreVisible() public {
+        _bootstrap();
+
+        vm.startPrank(lp);
+        IERC20(USDCE).approve(address(registry), type(uint256).max);
+        registry.recordCollection(30_000e6);       // a genuine third-party payment
+        vm.stopPrank();
+        assertEq(registry.originatorFunded(), 0, "no subsidy yet");
+
+        vm.startPrank(originator);
+        IERC20(USDCE).approve(address(registry), type(uint256).max);
+        registry.recordCollection(90_000e6);       // the originator paying its own book
+        vm.stopPrank();
+
+        // performanceRatio alone would now look healthy. originatorFunded says
+        // three quarters of it came from the party being measured.
+        assertEq(registry.originatorFunded(), 0.75e18, "subsidy is legible");
+        assertEq(registry.collectedFrom(originator), 90_000e6);
+        console.log("originator-funded share (bps)", registry.originatorFunded() / 1e14);
+    }
+
+    /// Exit denial is the cheapest attack on this design, so dust cannot hold a
+    /// queue slot and a cancelled ticket frees one immediately.
+    function test_QueueCannotBeBlockedByDust() public {
+        _bootstrap();
+        vm.warp(AS_OF_0 + 2 days);
+
+        uint256 stake = vault.convertToShares(5_000e6);
+        uint256 dust = vault.convertToShares(99e6);
+        uint256 real = vault.convertToShares(1_000e6);
+
+        vm.prank(lp);
+        vault.transfer(attacker, stake);
+
+        vm.startPrank(attacker);
+        vm.expectRevert(); // TicketTooSmall
+        vault.requestRedeem(dust);
+
+        // A real ticket takes a slot, and giving it up gives the slot back.
+        uint256 id = vault.requestRedeem(real);
+        assertEq(vault.queueDepth(), 1);
+        vault.cancelRedeem(id);
+        assertEq(vault.queueDepth(), 0, "cancelling frees the slot, not just the shares");
+        vm.stopPrank();
+    }
+
+    /// First-loss capital that can never come back is capital nobody posts
+    /// twice, so release is allowed, bounded by three things anyone can check.
+    function test_FirstLossReleaseIsBounded() public {
+        _bootstrap();
+
+        // Nothing leaves while the queue is owed anything.
+        uint256 sh = vault.convertToShares(200_000e6);
+        vm.prank(lp);
+        vault.requestRedeem(sh);
+        vm.prank(originator);
+        vm.expectRevert();
+        vault.releaseFirstLoss(1e6);
+        vault.settle();
+
+        uint256 free = vault.firstLossRemaining();
+        assertEq(free, 500_000e6 - 153_500e6, "impaired capital is not free");
+
+        // Nothing impaired may leave.
+        vm.prank(originator);
+        vm.expectRevert();
+        vault.releaseFirstLoss(free + 1);
+
+        // And coverage may not fall under the floor it was sized at.
+        uint256 floor_ = (vault.exposure() * vault.minFirstLossBps()) / 10_000;
+        uint256 tooMuch = 500_000e6 - floor_ + 1e6;
+        vm.prank(originator);
+        vm.expectRevert();
+        vault.releaseFirstLoss(tooMuch);
+
+        uint256 ok = 500_000e6 - floor_;
+        if (ok > free) ok = free;
+        uint256 before_ = IERC20(USDCE).balanceOf(originator);
+        vm.prank(originator);
+        vault.releaseFirstLoss(ok);
+        assertEq(IERC20(USDCE).balanceOf(originator) - before_, ok);
+        assertGe(vault.firstLoss(), floor_, "a permanent junior layer remains");
+        console.log("released (USDC)    ", ok / 1e6);
+        console.log("still junior (USDC)", vault.firstLoss() / 1e6);
+    }
+
+    /// A floor an admin can set to zero is not a floor.
+    function test_FloorCannotBeSwitchedOff() public {
+        uint16 justUnder = vault.MIN_FLOOR_BPS() - 1;
+        vm.startPrank(admin);
+        vm.expectRevert();
+        vault.setFloorBps(0);
+        vm.expectRevert();
+        vault.setFloorBps(justUnder);
+        vault.setFloorBps(2500); // raising it is fine
+        vm.stopPrank();
+        assertEq(vault.floorBps(), 2500);
+    }
+
+    /// The impairment schedule is a pure function, so "fixed at deployment" is
+    /// a property of the code rather than of the absence of a setter.
+    function test_ImpairmentScheduleIsNotStorage() public view {
+        assertEq(registry.impairmentBps(0), 0);
+        assertEq(registry.impairmentBps(1), 1000);
+        assertEq(registry.impairmentBps(2), 3000);
+        assertEq(registry.impairmentBps(3), 6000);
+        assertEq(registry.impairmentBps(4), 10_000);
     }
 
     /// Instant exits stay closed. An ERC-4626 integrator that ignores
