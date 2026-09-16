@@ -13,28 +13,28 @@
   <rect x="18" y="18" width="1404" height="664" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="1" rx="8"/>
 
   <text x="52" y="64" fill="#ffffff" font-size="26" font-weight="700">What we exercised of the Horizen stack</text>
-  <text x="52" y="88" fill="#c2d6cb" font-size="13.5">Each box is a Horizen component. The badge is how far we took it, not how far the documentation says it goes.</text>
+  <text x="52" y="88" fill="#c2d6cb" font-size="13.5">Each box is a Horizen component. The badge is how far we have taken it in roughly two weeks of work, not how far it could go.</text>
 
   <!-- VELA -->
   <rect x="42" y="120" width="330" height="290" rx="14" fill="#37574a" stroke="#ffffff" stroke-width="1.6"/>
-  <rect x="62" y="140" width="126" height="24" rx="12" fill="#1c3a2d" stroke="#9fd9b8" stroke-width="1"/>
-  <text x="125" y="156" fill="#9fd9b8" font-size="11" font-weight="700" text-anchor="middle">RUN LOCALLY</text>
+  <rect x="62" y="140" width="160" height="24" rx="12" fill="#1c3a2d" stroke="#9fd9b8" stroke-width="1"/>
+  <text x="125" y="156" fill="#9fd9b8" font-size="11" font-weight="700" text-anchor="middle">RUN LOCALLY, EARLY</text>
   <text x="62" y="192" fill="#ffffff" font-size="19" font-weight="700">Vela</text>
-  <text x="62" y="212" fill="#c2d6cb" font-size="12.5">TEE coprocessor, v0.2.0 starter kit</text>
+  <text x="62" y="212" fill="#c2d6cb" font-size="12.5">TEE coprocessor, v0.2.0 starter kit, locally</text>
   <text x="62" y="240" fill="#ffffff" font-size="12.5">Nine containers, full lifecycle executed:</text>
   <text x="62" y="261" fill="#c2d6cb" font-size="12.5">WASM app into the enclave</text>
   <text x="62" y="280" fill="#c2d6cb" font-size="12.5">P-521 key registered on-chain</text>
   <text x="62" y="299" fill="#c2d6cb" font-size="12.5">confidential deposit, balance read back</text>
   <text x="62" y="318" fill="#c2d6cb" font-size="12.5">authority granted, report decrypted</text>
-  <rect x="62" y="334" width="290" height="58" rx="10" fill="#2e4a3c" stroke="#e8b04b" stroke-width="1.3"/>
-  <text x="76" y="354" fill="#e8b04b" font-size="12" font-weight="700">Finding that moved it off Phase 1</text>
-  <text x="76" y="372" fill="#c2d6cb" font-size="11.5">not on any testnet, emulated enclave,</text>
-  <text x="76" y="386" fill="#c2d6cb" font-size="11.5">keys in plaintext. No attestation to rely on.</text>
+  <rect x="62" y="332" width="290" height="62" rx="10" fill="#2e4a3c" stroke="#e8b04b" stroke-width="1.3"/>
+  <text x="76" y="352" fill="#e8b04b" font-size="12" font-weight="700">What we found, and it is not what</text>
+  <text x="76" y="368" fill="#e8b04b" font-size="12" font-weight="700">the docs say</text>
+  <text x="76" y="386" fill="#c2d6cb" font-size="11.5">live on Base Sepolia, not yet on Horizen</text>
 
   <!-- ZK -->
   <rect x="396" y="120" width="330" height="290" rx="14" fill="#37574a" stroke="#ffffff" stroke-width="1.6"/>
-  <rect x="416" y="140" width="150" height="24" rx="12" fill="#1c3a2d" stroke="#9fd9b8" stroke-width="1"/>
-  <text x="491" y="156" fill="#9fd9b8" font-size="11" font-weight="700" text-anchor="middle">BUILT AND VERIFIED</text>
+  <rect x="416" y="140" width="180" height="24" rx="12" fill="#1c3a2d" stroke="#9fd9b8" stroke-width="1"/>
+  <text x="506" y="156" fill="#9fd9b8" font-size="11" font-weight="700" text-anchor="middle">FIRST CIRCUITS WORKING</text>
   <text x="416" y="192" fill="#ffffff" font-size="19" font-weight="700">Zero knowledge</text>
   <text x="416" y="212" fill="#c2d6cb" font-size="12.5">Noir + UltraHonk, verified on Horizen</text>
   <text x="416" y="240" fill="#ffffff" font-size="12.5">Two circuits, written not described:</text>
@@ -50,7 +50,7 @@
   <!-- CHAIN -->
   <rect x="750" y="120" width="330" height="290" rx="14" fill="#37574a" stroke="#ffffff" stroke-width="1.6"/>
   <rect x="770" y="140" width="126" height="24" rx="12" fill="#1c3a2d" stroke="#9fd9b8" stroke-width="1"/>
-  <text x="833" y="156" fill="#9fd9b8" font-size="11" font-weight="700" text-anchor="middle">DEPLOYED</text>
+  <text x="833" y="156" fill="#9fd9b8" font-size="11" font-weight="700" text-anchor="middle">TESTNET ONLY</text>
   <text x="770" y="192" fill="#ffffff" font-size="19" font-weight="700">Horizen Chain</text>
   <text x="770" y="212" fill="#c2d6cb" font-size="12.5">testnet 2651420, mainnet 26514</text>
   <text x="770" y="240" fill="#ffffff" font-size="12.5">Live, and source-verified on the explorer:</text>
@@ -65,8 +65,8 @@
 
   <!-- PUREFI -->
   <rect x="1104" y="120" width="294" height="290" rx="14" fill="#2e4a3c" stroke="#9fd9b8" stroke-width="1.6"/>
-  <rect x="1124" y="140" width="126" height="24" rx="12" fill="#1c3a2d" stroke="#9fd9b8" stroke-width="1"/>
-  <text x="1187" y="156" fill="#9fd9b8" font-size="11" font-weight="700" text-anchor="middle">INTEGRATED</text>
+  <rect x="1124" y="140" width="188" height="24" rx="12" fill="#1c3a2d" stroke="#9fd9b8" stroke-width="1"/>
+  <text x="1218" y="156" fill="#9fd9b8" font-size="11" font-weight="700" text-anchor="middle">WIRED IN, UNTESTED LIVE</text>
   <text x="1124" y="192" fill="#9fd9b8" font-size="19" font-weight="700">PureFi</text>
   <text x="1124" y="212" fill="#c2d6cb" font-size="12.5">AML, live on Horizen mainnet</text>
   <text x="1124" y="240" fill="#ffffff" font-size="12.5">Confirmed callable on-chain and</text>
@@ -80,8 +80,8 @@
 
   <!-- what it adds up to -->
   <rect x="42" y="440" width="1356" height="98" rx="14" fill="#37574a" stroke="#ffffff" stroke-width="1.6"/>
-  <text x="66" y="470" fill="#ffffff" font-size="16.5" font-weight="700">What the evaluation changed in the design</text>
-  <text x="66" y="496" fill="#c2d6cb" font-size="13">Vela leaves the critical path and becomes Phase 2, because a hardware guarantee that is not deployed cannot carry a mainnet product.</text>
+  <text x="66" y="470" fill="#ffffff" font-size="16.5" font-weight="700">What the evaluation has already changed in the design</text>
+  <text x="66" y="496" fill="#c2d6cb" font-size="13">Vela waits, because it is live on Base Sepolia and not yet on Horizen. That is step three of Horizen Labs' own first phase, not an open question.</text>
   <text x="66" y="518" fill="#c2d6cb" font-size="13">zkVerify becomes optional rather than a dependency, because on this chain a proof verifies directly for about two thirds of a US cent.</text>
 
   <path d="M207 410 L207 440" stroke="#ffffff" stroke-width="1.5" fill="none" marker-end="url(#w)"/>
