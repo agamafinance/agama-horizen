@@ -288,7 +288,7 @@ Transaction hashes: `deployment/deployment-testnet.md`.
 
 **A confidential credit vault is buildable on Horizen mainnet today, provided
 its confidentiality comes from commitments plus proofs rather than from Vela.**
-It is already built and running on testnet. Thirty tests cover it: seven against
+It is already built and running on testnet. Forty-two tests cover it: seven against
 a live fork of mainnet chain 26514, seventeen adversarial, six stateful
 invariants over 4,096 randomised calls. The case the reviewer raised, a clean
 signature on top of a bad book, is one of them, and the book fails its own
