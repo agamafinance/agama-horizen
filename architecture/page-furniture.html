@@ -28,14 +28,16 @@
 
   .band-top .lockup { height: 5.7mm; display: block; }
 
+  /* Horizen wordmark, recoloured white from the brand SVG. Sized a touch
+     shorter than the Agama lockup because it is a pure all-caps wordmark with
+     no descenders, so it reads larger at the same height. */
   .band-top .chain {
+    height: 4.2mm;
+    display: block;
     margin-left: 3.2mm;
     padding-left: 3.2mm;
     border-left: 0.75pt solid rgba(255,255,255,0.45);
-    color: #9fd9b8;
-    font-size: 9.5px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
+    box-sizing: content-box;
   }
 
   .band-top .url {
@@ -61,7 +63,7 @@
 <body>
   <div class="band-top">
     <img class="lockup" src="assets/agama-lockup.png" alt="Agama">
-    <span class="chain">HORIZEN CHAIN 26514</span>
+    <img class="chain" src="assets/horizen-wordmark-white.png" alt="Horizen">
     <span class="url">agama.finance</span>
   </div>
   <div class="band-bottom"></div>
