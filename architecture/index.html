@@ -47,6 +47,7 @@
         <li><a href="#s2-2">2.2 Vela, Measured</a></li>
         <li><a href="#s2-3">2.3 zkVerify</a></li>
         <li><a href="#s2-4">2.4 Where the Phase Boundary Falls</a></li>
+        <li><a href="#s2-5">2.5 What We Exercised, and With What Result</a></li>
       </ul>
     </li>
     <li><a href="#s3">3. Architecture Overview</a>
@@ -338,6 +339,66 @@
     </tbody>
   </table>
 
+
+  <h3 id="s2-5">2.5 What We Exercised, and With What Result</h3>
+
+  <p>Our Builder Fund application, submitted on 4 September 2026, named one problem as
+  genuinely unsolved. Section 3 of that application said it in these words:</p>
+
+  <div class="callout">
+    &ldquo;What remains genuinely unsolved is detecting an issuer that signs accurate-looking
+    but false state. That's an attestation and audit problem, not a cryptographic one, and we
+    don't pretend otherwise.&rdquo;
+  </div>
+
+  <p>The review that came back put the same problem more sharply, and this document is the
+  work we did about it. Before designing anything we went through Horizen's own stack
+  component by component, ran what could be run, and let the findings decide the design rather
+  than the other way round.</p>
+
+  <div class="diagram">
+    <img src="assets/horizen-stack-tested.svg"
+         alt="Four Horizen components and how far each was taken: Vela run locally, zero-knowledge circuits built and verified on-chain, Horizen Chain deployed and source-verified, PureFi integrated into the deposit path.">
+  </div>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:17%">Component</th><th style="width:20%">How far we took it</th><th>Where to check it</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Vela</td>
+        <td>Full v0.2.0 stack run locally, complete confidential lifecycle executed</td>
+        <td><code>tee/README.md</code>, every command and the five findings</td>
+      </tr>
+      <tr>
+        <td>Zero knowledge</td>
+        <td>Two circuits written, proven, and verified on-chain by Horizen</td>
+        <td><code>zk/book_attest</code>, <code>zk/book_delta</code>, rebuild with <code>zk/prove.sh</code></td>
+      </tr>
+      <tr>
+        <td>Horizen Chain</td>
+        <td>Deployed on testnet 2651420, source-verified on the explorer</td>
+        <td><code>deployment/</code>, every transaction hash. Read the live state with <code>deployment/read-state.sh</code></td>
+      </tr>
+      <tr>
+        <td>PureFi</td>
+        <td>Confirmed callable on mainnet and wired into the deposit path</td>
+        <td><code>0x681Edd4906e2a0a277E2A6c394A4595f83e1329c</code></td>
+      </tr>
+      <tr>
+        <td>zkVerify</td>
+        <td>Evaluated and set aside, with a reason</td>
+        <td><a href="#s2-3">Section 2.3</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Two of those findings changed the architecture rather than confirming it. Vela left the
+  critical path, because a hardware guarantee that is not deployed anywhere cannot carry a
+  mainnet product. zkVerify became optional rather than a dependency, because on this chain a
+  proof verifies directly for about two thirds of a US cent. Neither conclusion is one we
+  expected going in.</p>
 
 <!-- ============================================ 3. ARCHITECTURE ========= -->
 
