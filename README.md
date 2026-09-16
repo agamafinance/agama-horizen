@@ -28,14 +28,20 @@ actually supports**, and reworking the disclosure design around what we found.
 
 ### → [`Agama x Horizen - Technical Architecture.pdf`](Agama%20x%20Horizen%20-%20Technical%20Architecture.pdf)
 
-Twenty-two pages, and the document this repository supports.
+Twenty-three pages, and the document this repository supports.
 
-> **Status.** This is an early build, started in response to your review and
-> roughly two weeks old. It is a prototype meant to test whether the approach
-> holds, not a product. The book behind every figure is synthetic, nothing has
-> run on mainnet, there is no originator and no depositor, the attestation
-> circuit is capped at 64 positions, and none of it has been audited. Most of the
-> work is still ahead.
+> **Status of the technical work.** This is an early build, started in response
+> to your review and roughly two weeks old. It is a prototype meant to test
+> whether the approach holds, not a product. The book behind every figure is
+> synthetic, nothing has run on mainnet, there is no originator and no depositor,
+> the attestation circuit is capped at 64 positions, and none of it has been
+> audited. Most of the work is still ahead.
+
+### → [`Agama x Horizen - Traction.pdf`](Agama%20x%20Horizen%20-%20Traction.pdf)
+
+Four pages on the business rather than the code: the supply side, the capital
+committing, and the ecosystem support behind it. Pre-mainnet, with the first
+vault launching in Q4.
 
 ---
 
