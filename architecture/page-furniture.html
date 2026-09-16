@@ -34,10 +34,18 @@
   .band-top .chain {
     height: 4.2mm;
     display: block;
-    margin-left: 3.2mm;
-    padding-left: 3.2mm;
+    /* The rule sits on this element's left edge, so margin-left is the gap
+       before it and padding-left the gap after. The Agama lockup carries
+       transparent padding on its right, so equal values put the rule visually
+       off centre; these are set by eye against the rendered band. */
+    margin-left: 2.3mm;
+    padding-left: 4.1mm;
     border-left: 0.75pt solid rgba(255,255,255,0.45);
     box-sizing: content-box;
+    /* The wordmark's glyphs sit high in their box, so optical centring needs a
+       nudge that flex alignment will not give. */
+    position: relative;
+    top: 0.35mm;
   }
 
   .band-top .url {
