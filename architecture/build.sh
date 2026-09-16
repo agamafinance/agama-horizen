@@ -59,19 +59,42 @@ render page-furniture.html furniture.pdf
 python3 - "$TMP/body.pdf" "$TMP/furniture.pdf" "$OUT" <<'PY'
 import sys
 from pypdf import PdfReader, PdfWriter
+from pypdf.annotations import Link
 
 body, furniture, out = sys.argv[1:4]
-band = PdfReader(furniture).pages[0]
+band_page = PdfReader(furniture).pages[0]
 reader = PdfReader(body)
 writer = PdfWriter()
 
 for page in reader.pages:
-    page.merge_page(band)          # bands paint over the (empty) page margins
+    page.merge_page(band_page)     # bands paint over the (empty) page margins
     writer.add_page(page)
+
+# Whether merge_page carries annotations across has varied between pypdf
+# releases, and a link that is painted but dead is worse than no link. Collect
+# the band's targets, then add only the ones a page does not already carry, so
+# this works either way and never doubles them up.
+def links_of(page):
+    out = []
+    for annot in page.get("/Annots", []) or []:
+        a = annot.get_object()
+        uri = (a.get("/A") or {}).get("/URI")
+        if a.get("/Subtype") == "/Link" and uri:
+            out.append((tuple(round(float(x), 1) for x in a["/Rect"]), str(uri)))
+    return out
+
+band_links = links_of(band_page)
+added = 0
+for i, wpage in enumerate(writer.pages):
+    present = set(links_of(wpage))
+    for rect, uri in band_links:
+        if (rect, uri) not in present:
+            writer.add_annotation(page_number=i, annotation=Link(rect=rect, url=uri))
+            added += 1
 
 with open(out, "wb") as fh:
     writer.write(fh)
-print(f"{len(reader.pages)} pages")
+print(f"{len(reader.pages)} pages, {len(band_links)} band link(s), {added} re-added")
 PY
 
 echo "Wrote: $OUT"
