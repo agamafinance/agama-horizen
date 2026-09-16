@@ -2,6 +2,14 @@
 
 Reproduces the local Vela test described in `architecture/FEASIBILITY.md` section 2.
 
+The session this describes is captured verbatim in
+[`vela-session.log`](vela-session.log): the enclave coming up, the keyset it
+generated, the handshake with the manager, the signing key it registered
+on-chain, the WASM application deployed into it, and each confidential request
+it processed. It is a local emulated enclave, so the attestation is not a real
+Nitro one. That is exactly the gap Phase 2 closes, and it is why Vela is not on
+our Phase 1 critical path.
+
 ## Bring up the stack
 
 ```sh
