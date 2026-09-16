@@ -1,0 +1,35 @@
+name: tests
+
+on:
+  push:
+    branches: [main, ci-trial]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  forge:
+    name: forge test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          # Pinned to the version every figure in the paper was measured on.
+          # 1.8.x reports the invariant suite differently, which would put CI
+          # out of step with the counts the documents state.
+          version: v1.4.1
+
+      - name: Versions
+        run: forge --version
+
+      - name: Cache the pinned Horizen fork
+        uses: actions/cache@v4
+        with:
+          path: ~/.foundry/cache/rpc
+          key: horizen-fork-26170000
+
+      - name: Run the suite
+        working-directory: contracts
+        run: forge test -vv --summary

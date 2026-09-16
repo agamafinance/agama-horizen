@@ -2,6 +2,8 @@
 
 **Technical follow-up to our Builder Ecosystem Fund application.**
 
+[![tests](https://github.com/agamafinance/agama-horizen/actions/workflows/tests.yml/badge.svg)](https://github.com/agamafinance/agama-horizen/actions/workflows/tests.yml)
+
 ---
 
 ## Why this repository exists
