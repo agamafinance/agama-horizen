@@ -11,6 +11,9 @@ solc = "0.8.28"
 remappings = ["openzeppelin-contracts/=lib/openzeppelin-contracts/"]
 fs_permissions = [{ access = "read", path = "./test/fixtures" }]
 
+[rpc_endpoints]
+horizen = "${HORIZEN_RPC:-https://horizen.calderachain.xyz/http}"
+
 [invariant]
 runs = 64
 depth = 64

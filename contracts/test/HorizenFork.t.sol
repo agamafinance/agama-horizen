@@ -18,6 +18,11 @@ contract HorizenForkTest is Test {
     address constant PUREFI_VERIFIER = 0x681Edd4906e2a0a277E2A6c394A4595f83e1329c;
     uint256 constant HORIZEN_CHAIN_ID = 26514;
 
+    /// @dev Pinned so the suite is deterministic and Foundry caches the fork
+    ///      locally after the first run. Without a pin every run refetches
+    ///      state from the public RPC and a timeout fails the whole suite.
+    uint256 constant FORK_BLOCK = 26_170_000;
+
     uint64 constant AS_OF_0 = 1789500000;
     uint64 constant AS_OF_1 = AS_OF_0 + 30 days;
     uint64 constant PREV_COMMIT_TS = AS_OF_0 - 1 days; // genesis commit, matches the circuit
@@ -35,7 +40,7 @@ contract HorizenForkTest is Test {
     address borrowerRail = makeAddr("borrowerRail");
 
     function setUp() public {
-        vm.createSelectFork(vm.envOr("HORIZEN_RPC", string("https://horizen.calderachain.xyz/http")));
+        vm.createSelectFork(vm.envOr("HORIZEN_RPC", string("https://horizen.calderachain.xyz/http")), FORK_BLOCK);
         assertEq(block.chainid, HORIZEN_CHAIN_ID, "not on Horizen mainnet");
 
         verifier = new HonkVerifier();
