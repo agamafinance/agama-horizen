@@ -92,7 +92,7 @@ behind it is that **confidentiality covers identity, not risk**.
 | | |
 | --- | --- |
 | Published every attestation, proven against an on-chain commitment | position count, principal, maturity ladder, delinquency buckets, concentration, and the cash the book is contractually owed over the coming 30 days |
-| Still private, and we defend it | borrower identity, negotiated terms, individual positions |
+| Still private, and we defend it | borrower identity, negotiated terms, individual loan positions |
 | Computed rather than asserted | NAV, from the proven surface and an impairment schedule fixed in code |
 | Observed rather than reported | collections, because repayments settle on-chain |
 
@@ -100,6 +100,18 @@ The consequence is that a clean signature over a bad book still produces a valid
 proof, and then misses the cash calendar it published before the period began.
 The lie stops being undetectable and starts having a half-life of one payment
 period.
+
+### What this does not yet cover
+
+The application named three confidentiality requirements. This design delivers
+the third and not the first two, and the paper says so in section 7.3 rather
+than leaving it to be noticed.
+
+| Requirement | Status |
+| --- | --- |
+| Credit-level detail: borrowers, maturities, terms | **Delivered.** Commitments plus proofs, live on Horizen |
+| Depositor positions and identities | **Not in this design.** The vault is ERC-4626, so balances are public. Needs the confidential ledger Vela provides, which we ran locally and cannot deploy |
+| Pending redemptions, confidential until execution | **Deliberately inverted**, because the review made the opposite point. Section 9.2 resolves it: the aggregate is the run signal and belongs in public, the individual ticket is the exploitable detail and belongs in the enclave |
 
 The paper works through all of it, along with what remains trusted and what we
 do not claim.
