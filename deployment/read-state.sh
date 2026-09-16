@@ -9,6 +9,9 @@ VAULT="${VAULT:-0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651}"
 r() { cast call "$1" "$2" ${3:-} --rpc-url "$RPC" | cut -d' ' -f1; }
 u6() { python3 -c "print('%15.2f'%(int('$1')/1e6))"; }
 pct() { python3 -c "print('%9.3f %%'%(int('$1')/1e16))"; }
+cov() { python3 -c "
+v=int('$1')
+print('        empty queue' if v > 2**255 else '%9.1f %%'%(v/1e16))"; }
 
 echo "Horizen testnet 2651420 | registry $REG"
 echo
@@ -49,8 +52,21 @@ echo "  seconds since a surface    $(r "$REG" "attestationAge()(uint256)")"
 echo
 echo "vault $VAULT"
 echo "  NAV                        $(u6 "$(r "$VAULT" "totalAssets()(uint256)")") USDC"
+echo "  first loss remaining       $(u6 "$(r "$VAULT" "firstLossRemaining()(uint256)")") USDC"
+echo
+echo "liquidity, and what it is telling you"
 echo "  liquid buffer              $(u6 "$(r "$VAULT" "buffer()(uint256)")") USDC"
 echo "  reserve floor              $(u6 "$(r "$VAULT" "reserveFloor()(uint256)")") USDC"
-echo "  first loss remaining       $(u6 "$(r "$VAULT" "firstLossRemaining()(uint256)")") USDC"
 echo "  exit queue depth           $(r "$VAULT" "queueDepth()(uint256)")"
 echo "  queue is owed              $(u6 "$(r "$VAULT" "queuedAssets()(uint256)")") USDC"
+echo "  30d coverage of the queue $(cov "$(r "$VAULT" "coverageRatio()(uint256)")")"
+cat <<'NOTE'
+
+  The floor gates new lending, not redemption: deploy() reverts below it,
+  settle() does not, so paying the queue can and does take the buffer under
+  it. Coverage is buffer plus contractual inflows plus maturities inside 30
+  days, against what the queue is owed. Below 100 % the vault is saying it
+  cannot pay everyone next month, a month before it has to, to every holder
+  at once. That is the number, not the weekly gate, that is meant to answer
+  "the depositor is last to see a run".
+NOTE
