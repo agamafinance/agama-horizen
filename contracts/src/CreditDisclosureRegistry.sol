@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AccessControl} from "openzeppelin-contracts/contracts/access/AccessControl.sol";
+import {AccessControlEnumerable} from "openzeppelin-contracts/contracts/access/extensions/AccessControlEnumerable.sol";
 import {IRiskSurface} from "./IRiskSurface.sol";
 
 interface IHonkVerifier {
@@ -28,7 +28,7 @@ interface IHonkVerifier {
 ///
 /// The registry does not claim to prove credit quality. It makes credit quality
 /// falsifiable in public, on a fixed clock, without naming a single borrower.
-contract CreditDisclosureRegistry is IRiskSurface, AccessControl {
+contract CreditDisclosureRegistry is IRiskSurface, AccessControlEnumerable {
     using SafeERC20 for IERC20;
 
     bytes32 public constant ORIGINATOR_ROLE = keccak256("ORIGINATOR_ROLE");
@@ -38,7 +38,13 @@ contract CreditDisclosureRegistry is IRiskSurface, AccessControl {
     /// @dev    Public, fixed at deployment, applied mechanically. NAV is a pure
     ///         function of the proven surface and this schedule, so the
     ///         originator has no discretion over its own mark.
-    uint16[5] public IMPAIRMENT_BPS = [0, 1000, 3000, 6000, 10000];
+    function impairmentBps(uint256 bucket) public pure returns (uint16) {
+        if (bucket == 0) return 0;
+        if (bucket == 1) return 1000;
+        if (bucket == 2) return 3000;
+        if (bucket == 3) return 6000;
+        return 10_000;
+    }
 
     uint64 public constant EPOCH = 30 days;
 
@@ -65,6 +71,13 @@ contract CreditDisclosureRegistry is IRiskSurface, AccessControl {
     /// @notice Cash that actually arrived in that epoch.
     mapping(uint64 => uint128) public realized;
 
+    /// @notice Cash each payer has put in, cumulatively.
+    /// @dev    Nothing stops an originator wiring its own money in to make a
+    ///         failing book look like a performing one. What this does is make
+    ///         that wiring public and attributable, so the question becomes
+    ///         "who paid" rather than "did cash arrive". See originatorFunded().
+    mapping(address => uint256) public collectedFrom;
+
     /// @notice Cash the chain has seen leave the vault, cumulatively.
     /// @dev    The hard ceiling on any claimed book. An originator cannot assert
     ///         a position that no disbursement paid for, because disbursement is
@@ -90,7 +103,8 @@ contract CreditDisclosureRegistry is IRiskSurface, AccessControl {
     event RevisionCommitted(bytes32 indexed fromRoot, bytes32 indexed toRoot, uint64 at);
     event SurfacePublished(bytes32 indexed bookRoot, uint64 indexed asOf, uint128 totalPrincipal, uint128 dueNext30d);
     event ScheduleOpened(uint64 indexed epoch, uint128 scheduledAmount);
-    event CollectionRecorded(uint64 indexed epoch, uint128 amount, uint128 epochTotal);
+    event CollectionRecorded(uint64 indexed epoch, address indexed from, uint128 amount, uint128 epochTotal);
+    event Swept(address indexed to, uint256 amount);
     event VerifierAttested(address indexed verifierAddr, uint64 indexed asOf, bytes32 bookRoot, bytes32 findingsHash);
     event DeploymentRecorded(bytes32 indexed bookRoot, uint256 amount, uint256 cumulative);
 
@@ -281,13 +295,20 @@ contract CreditDisclosureRegistry is IRiskSurface, AccessControl {
         uint64 e = epochOf(uint64(block.timestamp));
         realized[e] += uint128(amount);
         collectedCumulative += amount;
-        emit CollectionRecorded(e, uint128(amount), realized[e]);
+        collectedFrom[msg.sender] += amount;
+        emit CollectionRecorded(e, msg.sender, uint128(amount), realized[e]);
     }
 
     /// @notice Forward collected cash to the vault.
-    function sweepTo(address to) external onlyRole(DEFAULT_ADMIN_ROLE) returns (uint256 amount) {
+    /// @dev    The destination is the bound vault and nothing else, and the call
+    ///         is permissionless. An admin key that can choose where borrower
+    ///         repayments go is a custody risk dressed as an operational
+    ///         convenience, and a depositor cannot tell the two apart.
+    function sweep() external returns (uint256 amount) {
+        if (vault == address(0)) revert NotVault();
         amount = asset.balanceOf(address(this));
-        asset.safeTransfer(to, amount);
+        asset.safeTransfer(vault, amount);
+        emit Swept(vault, amount);
     }
 
     // ----------------------------------------------------------- attestation
@@ -336,7 +357,7 @@ contract CreditDisclosureRegistry is IRiskSurface, AccessControl {
 
     function impairedPrincipal() public view returns (uint256 impaired) {
         for (uint256 i = 0; i < 5; ++i) {
-            impaired += (uint256(_surface.delinquent[i]) * IMPAIRMENT_BPS[i]) / 10_000;
+            impaired += (uint256(_surface.delinquent[i]) * impairmentBps(i)) / 10_000;
         }
     }
 
@@ -358,6 +379,21 @@ contract CreditDisclosureRegistry is IRiskSurface, AccessControl {
         uint128 s = scheduled[epoch];
         if (s == 0) return 0;
         return (uint256(realized[epoch]) * 1e18) / s;
+    }
+
+    /// @notice How much of the collected cash came from an address holding the
+    ///         originator role, as a share of everything collected, 1e18 scale.
+    /// @dev    A book whose repayments come mostly from its own originator is
+    ///         not performing, it is being subsidised. This makes that legible
+    ///         without needing anyone to disclose it.
+    function originatorFunded() external view returns (uint256) {
+        if (collectedCumulative == 0) return 0;
+        uint256 self;
+        uint256 n = getRoleMemberCount(ORIGINATOR_ROLE);
+        for (uint256 i = 0; i < n; ++i) {
+            self += collectedFrom[getRoleMember(ORIGINATOR_ROLE, i)];
+        }
+        return (self * 1e18) / collectedCumulative;
     }
 
     function attestationAge() external view returns (uint256) {
