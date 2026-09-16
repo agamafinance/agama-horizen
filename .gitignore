@@ -6,3 +6,7 @@ zk/*/target/
 zk/zkverify/node_modules/
 zk/zkverify/.env
 zk/zkverify/aggregation.json
+zk/zkverify/accepted.json
+zk/zkverify/domain.json
+zk/zkverify/collect.log
+zk/zkverify/package-lock.json

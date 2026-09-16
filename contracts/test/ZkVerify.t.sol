@@ -17,13 +17,24 @@ contract ZkVerifyTest is Test {
     address constant ZKV_BASE_SEPOLIA = 0x312468EbF274F1f584d93d0CCA8458cC91460FC0;
     uint256 constant DOMAIN = 0;
 
+    /// The vk hash zkVerify itself reports for our key, via session.getVkHash.
+    /// Not keccak256 of the raw vk bytes: the pallet hashes the SCALE-encoded
+    /// versioned enum, which carries a discriminant and a length prefix.
+    bytes32 constant VK_HASH = 0x5da1b785ba7eb5ff008935ce60182447b79a4d171b1b1f1f0722e5e8fc7c9b78;
+
+    /// The statement zkVerify returned when it verified this exact proof, in
+    /// submission 0x49ed9bbc on Volta. Ground truth for the leaf formula.
+    bytes32 constant REAL_STATEMENT = 0x0f3c234e17e8b7c35e1621b7f6b183a99998a5a25fc42db4760fb357905af730;
+
+    /// The root zkVerify published for domain 10 aggregation 2, which contains
+    /// that statement as its only leaf. Block 0x761aa9e3.
+    bytes32 constant REAL_ROOT = 0xb2ee6f0eb55cd0a4452c30da159adcfda7e6c0f227a22cb30c39229416946564;
+
     ZkVerifyRiskSurface adapter;
-    bytes32 vkHash;
 
     function setUp() public {
         vm.createSelectFork("https://sepolia.base.org");
-        vkHash = keccak256(vm.readFileBinary("test/fixtures/zkv_vk.bin"));
-        adapter = new ZkVerifyRiskSurface(ZKV_BASE_SEPOLIA, vkHash, DOMAIN);
+        adapter = new ZkVerifyRiskSurface(ZKV_BASE_SEPOLIA, VK_HASH, DOMAIN);
     }
 
     function _inputs() internal view returns (bytes32[] memory out) {
@@ -53,22 +64,50 @@ contract ZkVerifyTest is Test {
         console.log("verifyProofAggregation answers, and refuses an unposted aggregation");
     }
 
-    /// The leaf is keccak256(provingSystemId, vkHash, keccak256(publicInputs)),
-    /// which is the shape zkVerify's UltraHonk pallet hashes its statement with.
-    function test_LeafMatchesTheStatementZkVerifyWouldHash() public view {
+    /// The decisive test. Our leaf must equal the statement zkVerify actually
+    /// returned for this proof, not merely match the published formula, which
+    /// describes three components where the pallet hashes four.
+    function test_LeafReproducesTheStatementZkVerifyReturned() public view {
         bytes32[] memory pi = _inputs();
         assertEq(pi.length, 17, "the circuit emits 17 public inputs");
 
-        bytes32 expected = keccak256(
-            abi.encodePacked(keccak256("ultrahonk"), vkHash, keccak256(abi.encodePacked(pi)))
+        bytes32 leaf = adapter.leafFor(pi);
+        console.log("leaf we compute");
+        console.logBytes32(leaf);
+        console.log("statement zkVerify returned on Volta");
+        console.logBytes32(REAL_STATEMENT);
+        assertEq(leaf, REAL_STATEMENT, "leaf does not reproduce the real statement");
+    }
+
+    /// Dropping the version hash, which is what the documentation's three-part
+    /// description leads you to do, produces a leaf that is in no tree anywhere.
+    function test_TheThreePartFormulaFromTheDocsIsWrong() public view {
+        bytes32[] memory pi = _inputs();
+        bytes32 threeParts = keccak256(
+            abi.encodePacked(keccak256("ultrahonk"), VK_HASH, keccak256(abi.encodePacked(pi)))
         );
-        assertEq(adapter.leafFor(pi), expected, "leaf formula drifted");
-        console.log("proving system id");
-        console.logBytes32(adapter.PROVING_SYSTEM_ID());
-        console.log("vk hash");
-        console.logBytes32(vkHash);
-        console.log("leaf");
-        console.logBytes32(expected);
+        assertTrue(threeParts != REAL_STATEMENT, "the docs formula would have worked after all");
+        console.log("what the documented three-part formula gives");
+        console.logBytes32(threeParts);
+    }
+
+    /// zkVerify's tree hashes the leaf at the bottom, so a single-leaf
+    /// aggregation roots at keccak256(leaf) rather than at the leaf itself.
+    /// Worth pinning, because it is the shape a one-proof batch takes and it is
+    /// not what a reader of the interface would assume.
+    function test_SingleLeafAggregationRootsAtKeccakOfTheLeaf() public view {
+        bytes32[] memory pi = _inputs();
+        assertEq(adapter.leafFor(pi), REAL_STATEMENT);
+        assertEq(keccak256(abi.encodePacked(REAL_STATEMENT)), REAL_ROOT, "root is not keccak of the leaf");
+    }
+
+    /// And hashing the raw vk bytes instead of the SCALE-encoded versioned key is
+    /// the other way to get a leaf that never matches.
+    function test_NaiveVkHashIsWrong() public view {
+        bytes32 naive = keccak256(vm.readFileBinary("test/fixtures/zkv_vk.bin"));
+        assertTrue(naive != VK_HASH, "raw vk hash happened to match");
+        console.log("keccak256 of the raw vk bytes, which is not what the pallet uses");
+        console.logBytes32(naive);
     }
 
     /// Changing a single published number changes the leaf, so a surface cannot
@@ -79,6 +118,7 @@ contract ZkVerifyTest is Test {
 
         pi[14] = bytes32(0); // wipe the 90-plus delinquency bucket
         assertTrue(adapter.leafFor(pi) != honest, "the leaf did not move");
+        assertTrue(adapter.leafFor(pi) != REAL_STATEMENT, "a tampered surface reached a real statement");
     }
 
     /// Once zkVerify says the proof was verified, the surface decodes to the same
