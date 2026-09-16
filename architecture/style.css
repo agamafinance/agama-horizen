@@ -341,7 +341,7 @@ pre {
 
 .colophon {
   /* deliberately tight: the block has to share the last page with the
-     Stellar Ecosystem Proposals table, or it takes a page of its own */
+     table above it, or it takes a page of its own */
   margin-top: 2mm;
   padding-top: 2mm;
   border-top: 0.75pt solid var(--line);
