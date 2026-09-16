@@ -1109,9 +1109,9 @@ if (maxCommittedTs &gt; committedAt) revert LeafBackdated();</code></pre>
   <h3 id="s8-2">8.2 Test Suite</h3>
 
   <p>Forty-two tests, in <code>contracts/test/</code>. Seven run the disclosure cycle against a
-  live fork of Horizen mainnet, chain 26514. Seventeen attack the design rather than demonstrate it. Six are stateful invariants
+  live fork of Horizen mainnet, chain 26514. Twenty-three attack the design rather than demonstrate it. Six are stateful invariants
   driven by randomised traffic, and six cover the zkVerify route, one of them against
-  the live aggregation contract on Base Sepolia.</p>
+  the live aggregation contract on a fork of Base Sepolia.</p>
 
   <table class="bold-first">
     <thead>
