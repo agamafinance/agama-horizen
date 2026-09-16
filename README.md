@@ -121,7 +121,7 @@ flowchart TB
 | Component | How far we have taken it so far | Where to check it |
 | --- | --- | --- |
 | **Vela** | [Full v0.2.0 stack](https://github.com/HorizenOfficial/vela-starterkit) run locally. WASM app into the enclave, P-521 key registered, confidential deposit, authority granted on-chain, deanonymisation report decrypted. Live on Base Sepolia for early-access developers, not yet on Horizen | [`tee/`](tee/) |
-| **Zero knowledge** | Two [Noir](https://noir-lang.org/) circuits written, proven, and verified on-chain by Horizen. 3.0 s and 1.2 s to prove, 2,364,745 gas to verify | [`zk/`](zk/) |
+| **Zero knowledge** | Two [Noir](https://noir-lang.org/) circuits written, proven, and verified on-chain by Horizen. 3.0 s and 1.2 s to prove, 2,364,745 gas to verify. `zk/prove.sh` regenerates the deployed Solidity verifiers byte for byte | [`zk/`](zk/) |
 | **Horizen Chain** | Deployed on testnet 2651420 and source-verified on the explorer. Full cycle executed on-chain | [`deployment/`](deployment/) |
 | **PureFi** | Confirmed callable on mainnet, wired into the deposit path so a failed screen reverts the whole transaction | [`0x681Edd49…`](https://horizen-testnet.explorer.caldera.xyz/address/0x681Edd4906e2a0a277E2A6c394A4595f83e1329c) |
 | **[zkVerify](https://docs.zkverify.io/)** | Proof verified and aggregated by zkVerify on Volta. Consumer deployed and source-verified on Base Sepolia, where it recomputes zkVerify's statement on-chain and admits the surface for 266,041 gas against 2,364,745 direct | [`zk/zkverify/`](zk/zkverify/), [`deployment/base-sepolia.md`](deployment/base-sepolia.md) |
@@ -173,6 +173,14 @@ these addresses can be read rather than trusted.
 
 Every transaction hash is in [`deployment/`](deployment/), including ten attacks
 submitted to the chain and mined as reverts.
+
+Two things here are reproducible end to end rather than asserted. `forge test`
+in [`contracts/`](contracts/) runs forty-seven tests against a pinned fork of
+Horizen mainnet. And `./prove.sh` in [`zk/`](zk/) rebuilds both circuits and
+regenerates `HonkVerifier.sol` and `DeltaVerifier.sol` byte for byte identical
+to the contracts source-verified at the addresses above, so `git status` stays
+clean after a full rebuild. That is a complete chain from circuit source to
+on-chain bytecode, on a laptop, in one command.
 
 ---
 
