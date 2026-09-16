@@ -60,8 +60,8 @@ All five contracts are source-verified on the Horizen testnet explorer, chain
 
 | | |
 | --- | --- |
-| Registry | [`0x034635c324d83D590691C68d711AA5FA2FbA084f`](https://horizen-testnet.explorer.caldera.xyz/address/0x034635c324d83D590691C68d711AA5FA2FbA084f) |
-| Vault | [`0x58b90F2aA6C48B19B8792Bf4a5dcd2437Ae8FfA9`](https://horizen-testnet.explorer.caldera.xyz/address/0x58b90F2aA6C48B19B8792Bf4a5dcd2437Ae8FfA9) |
+| Registry | [`0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B`](https://horizen-testnet.explorer.caldera.xyz/address/0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B) |
+| Vault | [`0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651`](https://horizen-testnet.explorer.caldera.xyz/address/0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651) |
 
 ```sh
 ./deployment/read-state.sh    # reads only, no keys, no trust in us
