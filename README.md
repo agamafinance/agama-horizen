@@ -39,7 +39,7 @@ Twenty-one pages, and the document this repository supports.
 
 | Component | How far we took it | Where to check it |
 | --- | --- | --- |
-| **Vela** | Full v0.2.0 stack run locally. WASM app into the enclave, P-521 key registered, confidential deposit, authority granted on-chain, deanonymisation report decrypted | [`tee/`](tee/) |
+| **Vela** | Full v0.2.0 stack run locally. WASM app into the enclave, P-521 key registered, confidential deposit, authority granted on-chain, deanonymisation report decrypted. Live on Base Sepolia for early-access developers, not yet on Horizen | [`tee/`](tee/) |
 | **Zero knowledge** | Two Noir circuits written, proven, and verified on-chain by Horizen. 3.0 s and 1.2 s to prove, 2,364,745 gas to verify | [`zk/`](zk/) |
 | **Horizen Chain** | Deployed on testnet 2651420 and source-verified on the explorer. Full cycle executed on-chain | [`deployment/`](deployment/) |
 | **PureFi** | Confirmed callable on mainnet, wired into the deposit path so a failed screen reverts the whole transaction | [`0x681Edd49…`](https://horizen-testnet.explorer.caldera.xyz/address/0x681Edd4906e2a0a277E2A6c394A4595f83e1329c) |
@@ -47,10 +47,17 @@ Twenty-one pages, and the document this repository supports.
 
 **Two findings changed the architecture rather than confirming it.**
 
-Vela is not deployed to any testnet or mainnet, and its development stack runs an
-emulated enclave with its keys in plaintext. It leaves the critical path and
-becomes Phase 2, because a hardware guarantee that does not exist yet cannot
-carry a mainnet product.
+Vela is live on Base Sepolia for early-access developers, and **not yet on
+Horizen**. Horizen Labs list the sequence themselves: Base Sepolia, then Base
+mainnet, then "Deploy to Horizen testnet and mainnet". Their documentation's
+limitations page still says Vela is not deployed anywhere, which is out of step
+with their own product page, and the local development stack does run an
+emulated enclave with plaintext keys.
+
+So Vela leaves the Phase 1 critical path, because a dependency live on a
+different chain than ours is still one we cannot ship against today. It stays
+Phase 2, and Phase 2 is a bet on when a committed roadmap item reaches this
+chain rather than on whether the technology works.
 
 zkVerify is live, but its EVM contracts are not on Horizen L3, and at 0.001 gwei
 a proof verifies directly on Horizen for about two thirds of a US cent. It
@@ -110,7 +117,7 @@ than leaving it to be noticed.
 | Requirement | Status |
 | --- | --- |
 | Credit-level detail: borrowers, maturities, terms | **Delivered.** Commitments plus proofs, live on Horizen |
-| Depositor positions and identities | **Not in this design.** The vault is ERC-4626, so balances are public. Needs the confidential ledger Vela provides, which we ran locally and cannot deploy |
+| Depositor positions and identities | **Not in this design.** The vault is ERC-4626, so balances are public. Needs the confidential ledger Vela provides, which we ran locally and which reaches this chain at step three of Vela's own roadmap |
 | Pending redemptions, confidential until execution | **Deliberately inverted**, because the review made the opposite point. Section 9.2 resolves it: the aggregate is the run signal and belongs in public, the individual ticket is the exploitable detail and belongs in the enclave |
 
 The paper works through all of it, along with what remains trusted and what we
