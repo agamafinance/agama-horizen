@@ -47,7 +47,72 @@ vault launching in Q4.
 
 ## What we exercised of the Horizen stack
 
-![What we exercised of the Horizen stack](architecture/assets/horizen-stack-tested.png)
+```mermaid
+flowchart TB
+    subgraph offchain["CONFIDENTIAL, OFF-CHAIN"]
+        direction TB
+        BOOK["Loan book<br/>obligor · principal · maturity<br/>schedule · status · salt<br/><i>never leaves the originator</i>"]
+        PROVER["Attestation prover · Noir + UltraHonk<br/>book_attest · risk surface · 3.0 s<br/>book_delta · honest revision · 1.2 s"]
+        BOOK -->|"private witness"| PROVER
+    end
+
+    subgraph horizen["HORIZEN CHAIN · OP Stack L3 settling to Base · mainnet 26514 · testnet 2651420"]
+        direction TB
+        HONK["HonkVerifier<br/>2,364,745 gas"]
+        DELTA["DeltaVerifier<br/>2,222,133 gas"]
+        REGISTRY["CreditDisclosureRegistry<br/>book commitments · forward cash calendar<br/>observed collections · attestation log<br/><b>IRiskSurface</b> · MIT, no Agama dependency"]
+        VAULT["AgamaCreditVault · ERC-4626<br/>mechanical NAV · first-loss escrow<br/>reserve floor · pro-rata exit queue"]
+        PUREFI["PureFi Verifier<br/>synchronous AML, blocking"]
+        MARKET["Any Horizen money market<br/>reads IRiskSurface to set an LTV"]
+
+        HONK --> REGISTRY
+        DELTA --> REGISTRY
+        REGISTRY -->|"risk surface, read on-chain"| VAULT
+        REGISTRY --> MARKET
+        PUREFI --> VAULT
+    end
+
+    DEPOSITOR["Depositor<br/>sees the risk, never a borrower"]
+    BORROWER["Borrowers<br/>repay in USDC on-chain"]
+    AGENT["Verification agent<br/>full book access<br/>every access is a public tx"]
+
+    subgraph optional["OPTIONAL ROUTE, BUILT AND MEASURED"]
+        direction LR
+        ZKV["zkVerify · Volta<br/>proof verified and aggregated<br/>root 0xb2ee6f0e"]
+        BASESEP["Base Sepolia<br/>ZkVerifyRiskSurface<br/>same surface · 266,041 gas"]
+        ZKV -->|"aggregation root"| BASESEP
+    end
+
+    VELA["Vela · Phase 2<br/>depositor ledger moves into the enclave<br/>waits on step three of Vela's own roadmap"]
+
+    PROVER -->|"proof + 17 public inputs"| HONK
+    PROVER -->|"revision delta"| DELTA
+    PROVER -.->|"same proof, other road"| ZKV
+
+    DEPOSITOR -->|"deposit, AML in the same tx"| PUREFI
+    VAULT -->|"public queue, one pro-rata ratio"| DEPOSITOR
+    VAULT -->|"disburse only against a committed book"| BORROWER
+    BORROWER -->|"repayments, observed not reported"| REGISTRY
+    AGENT -->|"attest: who looked, and when"| REGISTRY
+
+    VAULT -.-> VELA
+
+    classDef integration fill:#f0fdf4,stroke:#22c55e,color:#15803d
+    classDef core fill:#ffffff,stroke:#374151,color:#111827
+    classDef offchainStyle fill:#fff7ed,stroke:#f97316,color:#c2410c
+    classDef feed fill:#faf5ff,stroke:#a855f7,color:#7e22ce
+    classDef actor fill:#eff6ff,stroke:#2563eb,color:#1e40af
+
+    class DEPOSITOR,BORROWER,AGENT actor
+    class PUREFI,MARKET integration
+    class HONK,DELTA,REGISTRY,VAULT core
+    class BOOK,PROVER offchainStyle
+    class ZKV,BASESEP,VELA feed
+
+    style offchain fill:#fffbf5,stroke:#f97316,stroke-dasharray:4 4
+    style horizen fill:#fafafa,stroke:#374151
+    style optional fill:#fdfaff,stroke:#a855f7,stroke-dasharray:4 4
+```
 
 | Component | How far we have taken it so far | Where to check it |
 | --- | --- | --- |
