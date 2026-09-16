@@ -24,12 +24,12 @@ here has been audited.
 forge test
 ```
 
-Forty-seven tests, all passing.
+Forty-nine tests, all passing.
 
 | Suite | Count | What it does |
 | --- | --- | --- |
 | `HorizenFork.t.sol` | 7 | Runs the whole disclosure cycle against a fork of Horizen mainnet pinned at block 26,170,000, so the gas figures in the paper are real numbers on the real chain |
-| `Adversarial.t.sol` | 23 | Attacks the design rather than demonstrating it. Backdated leaves, replayed and mis-parented revisions, stale surfaces, principal without disbursement, queue jumping, role escalation |
+| `Adversarial.t.sol` | 25 | Attacks the design rather than demonstrating it. Backdated leaves, replayed and mis-parented revisions, stale surfaces, principal without disbursement, queue jumping, exit denial, role escalation |
 | `Invariant.t.sol` | 6 | Stateful invariants over 4,096 randomised calls |
 | `ZkVerify.t.sol` | 11 | The aggregation route, against the real root published on Volta |
 

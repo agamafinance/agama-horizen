@@ -624,4 +624,71 @@ contract AdversarialTest is Test {
         registry.publishSurface(_proof("t0"), _inputs("t0"));
         assertEq(registry.surface().positions, 22);
     }
+
+    // --------------------------------------------------- exit queue bounds
+
+    /// @notice settle() must stay inside a block whatever traffic the queue has
+    ///         seen. MAX_QUEUE caps tickets that are open; this caps the span
+    ///         settle() actually walks, which is what keeps the exit reachable.
+    function test_SettleCostTracksOpenTicketsNotHistory() public {
+        vm.warp(AS_OF_0);
+        deal(USDCE, lp, 10_000_000e6);
+        vm.startPrank(lp);
+        IERC20(USDCE).approve(address(vault), type(uint256).max);
+        vault.deposit(5_000_000e6, lp);
+        vm.stopPrank();
+
+        vm.startPrank(attacker);
+        IERC20(USDCE).approve(address(vault), type(uint256).max);
+        vault.deposit(1_000e6, attacker);
+        uint256 small = vault.convertToShares(200e6);
+        for (uint256 i = 0; i < 1_000; ++i) {
+            uint256 id = vault.requestRedeem(small);
+            vault.cancelRedeem(id);
+        }
+        vm.stopPrank();
+
+        assertEq(vault.queueDepth(), 0, "nothing is open");
+        assertEq(vault.head(), 1_000, "closed slots are retired as they close");
+
+        uint256 big = vault.convertToShares(1_000_000e6);
+        vm.prank(lp);
+        vault.requestRedeem(big);
+
+        uint256 g = gasleft();
+        vault.settle();
+        assertLt(g - gasleft(), 300_000, "settle walks one open ticket, not the history");
+    }
+
+    /// @notice Holding the front of the queue is bounded and self-clearing:
+    ///         settle() takes no permission and pays the holder pro-rata like
+    ///         anyone else, so the position cannot be maintained for free.
+    function test_AHeldQueueClearsForAnyone() public {
+        vm.warp(AS_OF_0);
+        vm.startPrank(attacker);
+        IERC20(USDCE).approve(address(vault), type(uint256).max);
+        vault.deposit(200_000e6, attacker);
+        uint256 small = vault.convertToShares(200e6);
+        for (uint256 i = 0; i < vault.MAX_QUEUE(); ++i) {
+            vault.requestRedeem(small);
+        }
+        vm.stopPrank();
+
+        deal(USDCE, victim, 2_000_000e6);
+        vm.startPrank(victim);
+        IERC20(USDCE).approve(address(vault), type(uint256).max);
+        vault.deposit(1_000_000e6, victim);
+        uint256 big = vault.convertToShares(500_000e6);
+        vm.expectRevert(AgamaCreditVault.QueueFull.selector);
+        vault.requestRedeem(big);
+        vm.stopPrank();
+
+        vm.prank(address(0xBEEF));
+        vault.settle();
+        assertEq(vault.queueDepth(), 0, "the queue drained");
+
+        vm.prank(victim);
+        vault.requestRedeem(big);
+        assertEq(vault.queueDepth(), 1, "and it is open again");
+    }
 }

@@ -177,7 +177,7 @@ Every transaction hash is in [`deployment/`](deployment/), including ten attacks
 submitted to the chain and mined as reverts.
 
 Two things here are reproducible end to end rather than asserted. `forge test`
-in [`contracts/`](contracts/) runs forty-seven tests against a pinned fork of
+in [`contracts/`](contracts/) runs forty-nine tests against a pinned fork of
 Horizen mainnet. And `./prove.sh` in [`zk/`](zk/) rebuilds both circuits and
 regenerates `HonkVerifier.sol` and `DeltaVerifier.sol` byte for byte identical
 to the contracts source-verified at the addresses above, so `git status` stays

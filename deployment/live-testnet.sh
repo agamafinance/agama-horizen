@@ -10,7 +10,10 @@ cd "$(dirname "$0")"
 export PATH="$HOME/.nargo/bin:$HOME/.bb:$PATH"
 
 RPC="${HORIZEN_RPC:-https://horizen-testnet.rpc.caldera.xyz/http}"
-PK="${DEPLOYER_PK:?set DEPLOYER_PK}"
+# Keys never live in this repo. Drop DEPLOYER_PK in .env.local at the root,
+# which is ignored, or export it before running.
+[ -f ../.env.local ] && set -a && . ../.env.local && set +a
+PK="${DEPLOYER_PK:?set DEPLOYER_PK in .env.local or the environment}"
 ME=$(cast wallet address "$PK")
 C=../contracts
 Z=../zk
