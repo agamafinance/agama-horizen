@@ -85,27 +85,42 @@ between two thirds of a cent and a tenth of one, which is why Phase 1 verifies
 directly and treats this as the option it is. On a chain with L1 gas prices the
 arithmetic reverses, and the same consumer contract works there unchanged.
 
-## The last mile, and what it needs
+## The last mile, and the wall we hit
 
-The aggregation exists on zkVerify. It is **not** on an EVM chain, because domain
-10 is configured with `destination: None` and therefore relays nowhere.
+The aggregation exists on zkVerify. Getting its root onto an EVM chain is not
+something an application can do for itself, and that is the finding rather than a
+missing deposit.
 
-Getting a root onto Base or Base Sepolia needs a domain registered with a
-delivery destination, and registering a domain means posting a deposit. Real
-deposits on Volta today, read off the holds of existing domain owners, run from
-**4.6 to 35.25 tVFY** depending on aggregation and queue size. The faucet pays
-0.5 tVFY at a time.
+A zkVerify domain carries a `delivery` field with a destination. Reading the
+runtime metadata on both networks:
 
-And on Horizen L3 the question does not arise yet: there is no aggregation
-contract there at all, which is the finding that keeps this route off the Phase 1
-critical path.
+```
+Volta (testnet)    : hp_dispatch::Destination = None
+zkVerify (mainnet) : hp_dispatch::Destination = None
+```
 
-What we could verify without owning a domain: the aggregation contract deployed
-on Base Sepolia, `0x312468EbF274F1f584d93d0CCA8458cC91460FC0`, 17,826 bytes, is
-live and answers `verifyProofAggregation` with the exact ABI our consumer uses,
-refusing an aggregation nobody posted. That is
-`test_LiveZkVerifyContractSpeaksOurInterface`, run against a fork of Base
-Sepolia rather than a mock.
+One variant, and it is None. No domain setting relays anywhere. Roots reach EVM
+chains through a relayer zkVerify operates. We had started registering our own
+domain to configure delivery, and stopped when the metadata said there was
+nothing to configure. Domain deposits on Volta, read off existing owners' holds,
+run 4.6 to 35.25 tVFY against a faucet paying 0.5, so this would have been an
+expensive way to learn it.
+
+What we did instead, on Base Sepolia, is copy the real root across by hand into a
+stand-in and run everything downstream of it for real. See
+[`../../deployment/base-sepolia.md`](../../deployment/base-sepolia.md):
+
+- the consumer computes the leaf **on Base Sepolia** and it equals the statement
+  zkVerify hashed on Volta, `0x0f3c234e…`, derived from nothing but the public
+  inputs and the bound verification key
+- the surface is admitted against the real root in 266,041 gas, transaction
+  `0x5a88bdb5…`
+- the second deployment, pointed at zkVerify's real contract instead, reverts
+  with `NotAggregated`, because our aggregation genuinely is not relayed there
+
+And on Horizen L3 the question does not arise: there is no aggregation contract
+there at all, which is the finding that keeps this route off the Phase 1 critical
+path.
 
 ## Running it
 
@@ -134,4 +149,5 @@ on its own schedule.
 | `collect.mjs` | polls for an aggregation receipt |
 | `../book_attest/target/zkv084/` | the zk-flavour artefacts, built by `prove.sh --zkverify` |
 | `../../contracts/src/ZkVerifyRiskSurface.sol` | the consumer contract |
-| `../../contracts/test/ZkVerify.t.sol` | eight tests, one against the live contract |
+| `../../contracts/test/ZkVerify.t.sol` | eleven tests, one against the live contract |
+| `../../deployment/base-sepolia.sh` | deploys the consumer on Base Sepolia and admits a surface |
