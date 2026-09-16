@@ -67,10 +67,21 @@ All five contracts are source-verified on the Horizen testnet explorer, chain
 ./deployment/read-state.sh    # reads only, no keys, no trust in us
 ```
 
-Three readings are the whole argument:
+Three readings show the mechanism working:
 
 ```
-scheduledFor(0)       33,487.50 USDC    published before the period began
-realizedFor(0)        12,000.00 USDC    cash observed on-chain, not reported
-performanceRatio(0)       35.83 %       a number nobody had to agree to
+scheduledFor(0)       33,487.50 USDC    written once, before the period began
+realizedFor(0)        12,000.00 USDC    only moves when tokens actually arrive
+performanceRatio(0)       35.83 %       computed from the two, by nobody
 ```
+
+Read that for what it is. Both figures come from us: the 33,487.50 is the
+monthly interest on a book we generated in [`zk/gen.py`](zk/gen.py), and the
+12,000 is a payment we chose to make short so the shortfall would be visible.
+We authored both sides of the fraction.
+
+What the chain enforces, and we cannot: `scheduled` is written once when the
+surface is published and can never be revised afterwards, `realized` only moves
+on a token transfer that actually settles, and the ratio is derived from the two
+with no one in the loop. The detector is real and was tested. The fire was lit
+by us.
