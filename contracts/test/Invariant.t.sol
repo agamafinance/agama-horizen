@@ -64,7 +64,9 @@ contract Handler is Test {
         uint256 bal = vault.balanceOf(a);
         if (bal == 0) return;
         if (vault.queueDepth() >= vault.MAX_QUEUE()) return;
-        uint256 shares = bound(sharesSeed, 1, bal);
+        uint256 minShares = vault.convertToShares(vault.MIN_TICKET());
+        if (bal < minShares) return;
+        uint256 shares = bound(sharesSeed, minShares, bal);
         vm.prank(a);
         uint256 id = vault.requestRedeem(shares);
         openTickets.push(id);
