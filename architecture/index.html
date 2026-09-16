@@ -113,7 +113,7 @@
       <tbody>
         <tr><td><code>zk/</code></td><td><code>book_attest</code> and <code>book_delta</code> <a href="https://noir-lang.org/">Noir</a> circuits, the scenario generator, and the proving script that also runs the backdating attack on every build</td><td><a href="#s4">4</a>, <a href="#s4-4">4.4</a>, <a href="#s5-1">5.1</a></td></tr>
         <tr><td><code>tee/</code></td><td>The full <a href="https://github.com/HorizenOfficial/vela-starterkit">Vela stack</a> we ran locally, the confidential lifecycle we executed on it, and the five findings that took it off our critical path</td><td><a href="#s2-2">2.2</a>, <a href="#s9">9</a></td></tr>
-        <tr><td><code>contracts/</code></td><td>Registry, vault, <code>IRiskSurface</code>, both generated verifiers, and thirty tests: fork, adversarial and stateful invariant</td><td><a href="#s5">5</a>, <a href="#s6">6</a>, <a href="#s8-2">8.2</a></td></tr>
+        <tr><td><code>contracts/</code></td><td>Registry, vault, <code>IRiskSurface</code>, both generated verifiers, and forty-two tests: fork, adversarial, stateful invariant and zkVerify</td><td><a href="#s5">5</a>, <a href="#s6">6</a>, <a href="#s8-2">8.2</a></td></tr>
         <tr><td><code>deployment/</code></td><td>The live Horizen testnet deployment: scripts, addresses, every transaction hash, and a reader that dumps the public surface using only <code>eth_call</code></td><td><a href="#s8-1">8.1</a></td></tr>
       </tbody>
     </table>
@@ -357,10 +357,48 @@
   <strong>Not on Horizen L3.</strong> Consuming a zkVerify aggregation from a Horizen contract
   would require a relayer that Horizen does not currently run.</p>
 
-  <p>More decisively, zkVerify exists to solve a cost problem: verifying a proof on Ethereum L1
-  costs 200,000 to 300,000 gas at L1 gas prices. On Horizen at 0.001 gwei that argument does
-  not apply. We verify directly on Horizen and treat zkVerify as an optional later
-  optimisation for aggregating proofs across many originators, not as a dependency.</p>
+  <p>We built the integration rather than reasoning about it, because the trade-off is not
+  obvious until it is measured. <code>zk/zkverify</code> holds the submission path and
+  <code>contracts/src/ZkVerifyRiskSurface.sol</code> the consumer.</p>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:56%">What we established</th><th>Result</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>zkVerify's UltraHonk pallet accepts proofs from Noir's Barretenberg backend</td><td>Yes, in the zk flavour with a keccak transcript, which is what our circuit produces</td></tr>
+      <tr><td>The aggregation contract is live on Base Sepolia and answers the calls our consumer makes</td><td>Probed on a fork against <code>0x312468Eb&#8230;</code>, 17,826 bytes, refuses an unposted aggregation</td></tr>
+      <tr><td>An aggregation contract exists on Horizen L3</td><td class="no">No. This is what keeps it off the critical path</td></tr>
+    </tbody>
+  </table>
+
+  <table class="bold-first">
+    <thead>
+      <tr><th style="width:56%">Cost of admitting the same risk surface</th><th>Gas</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Verifying the proof directly on Horizen</td><td><strong>2,364,745</strong></td></tr>
+      <tr><td>Admitting it from a zkVerify aggregation</td><td><strong>237,795</strong></td></tr>
+      <tr><td>of which the leaf computation</td><td>3,286</td></tr>
+    </tbody>
+  </table>
+
+  <p>Both routes write the same thirteen words of risk surface, so the comparison that matters
+  is the verification component alone: a pairing check over a 2<sup>18</sup> circuit against a
+  Merkle path, roughly 2.1 M gas against a few thousand. An order of magnitude is real, and on
+  Horizen at 0.001 gwei it is also the difference between two thirds of a cent and a tenth of
+  one. That is why Phase 1 verifies directly and treats aggregation as the option it is. On a
+  chain with L1 gas prices the arithmetic reverses, and the same consumer contract works
+  there.</p>
+
+  <div class="callout">
+    <strong>What we have not done.</strong> The live submission has not run. The zkVerify
+    faucet asks for an email address and delivers tVFY within 24 hours, which no build script
+    can wait on. The account is created and the artefacts are built, so the submission is one
+    command away from a funded account. Everything before that point is verified: the proof is
+    the flavour the pallet requires, it verifies against its own key locally, the leaf formula
+    is tested, and the contract we would call has been probed live.
+  </div>
 
   <h3 id="s2-4">2.4 Where the Phase Boundary Falls</h3>
 
@@ -374,7 +412,7 @@
       <tr><td>PureFi AML and KYC</td><td>Live, verified callable</td><td>in use</td></tr>
       <tr><td>On-chain ZK verification</td><td>2,178,509 gas on a mainnet fork, 2,364,745 live on testnet</td><td>in use</td></tr>
       <tr><td>Stork oracle</td><td>Live</td><td class="no">not needed yet</td></tr>
-      <tr><td>zkVerify</td><td>Live, not deployed on Horizen L3</td><td class="no">set aside</td></tr>
+      <tr><td>zkVerify</td><td>Accepts our proofs, live on Base Sepolia, absent from Horizen L3</td><td class="no">an option, not a dependency</td></tr>
       <tr><td>Vela TEE</td><td>Live on Base Sepolia for early-access developers, not yet on Horizen</td><td class="no">waiting on step 3</td></tr>
     </tbody>
   </table>
@@ -1070,9 +1108,10 @@ if (maxCommittedTs &gt; committedAt) revert LeafBackdated();</code></pre>
 
   <h3 id="s8-2">8.2 Test Suite</h3>
 
-  <p>Thirty tests, in <code>contracts/test/</code>. Seven run the disclosure cycle against a
+  <p>Forty-two tests, in <code>contracts/test/</code>. Seven run the disclosure cycle against a
   live fork of Horizen mainnet, chain 26514. Seventeen attack the design rather than demonstrate it. Six are stateful invariants
-  driven by randomised traffic.</p>
+  driven by randomised traffic, and six cover the zkVerify route, one of them against
+  the live aggregation contract on Base Sepolia.</p>
 
   <table class="bold-first">
     <thead>

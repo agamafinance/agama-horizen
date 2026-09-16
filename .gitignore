@@ -3,3 +3,6 @@ contracts/cache/
 contracts/broadcast/
 zk/*/target/
 .DS_Store
+zk/zkverify/node_modules/
+zk/zkverify/.env
+zk/zkverify/aggregation.json

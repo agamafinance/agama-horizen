@@ -2,8 +2,9 @@
 # Build every circuit artefact the Foundry tests consume, and demonstrate that
 # the delta circuit refuses a backdated revision.
 #
-#   ./prove.sh            build proofs + verifiers
-#   ./prove.sh --quick    skip regenerating the Solidity verifiers
+#   ./prove.sh              build proofs + verifiers
+#   ./prove.sh --quick      skip regenerating the Solidity verifiers
+#   ./prove.sh --zkverify   also build the zk-flavour artefacts zkVerify needs
 set -euo pipefail
 cd "$(dirname "$0")"
 export PATH="$HOME/.nargo/bin:$HOME/.bb:$PATH"
@@ -53,6 +54,36 @@ fi
 # leave the honest delta inputs in place for reproducibility
 python3 gen.py delta >/dev/null
 sed -i '' "s|^old_root = .*|old_root = \"$ROOT\"|" book_delta/Prover.toml
+
+if [ "${1:-}" = "--zkverify" ]; then
+  # zkVerify's UltraHonk pallet accepts only the zk flavour, and only a keccak
+  # transcript. Same circuit and same witness as above, so the statement is
+  # identical to the one the registry verifies directly on Horizen.
+  echo "== zkVerify artefacts, zk flavour =="
+  python3 gen.py t0 > /dev/null
+  ( cd book_attest
+    nargo execute witness_zkv > /dev/null
+    bb prove    --scheme ultra_honk --zk --oracle_hash keccak \
+       -b target/book_attest.json -w target/witness_zkv.gz -o target/zkv > /dev/null
+    bb write_vk --scheme ultra_honk      --oracle_hash keccak \
+       -b target/book_attest.json -o target/zkv > /dev/null
+    bb verify   --scheme ultra_honk --zk --oracle_hash keccak \
+       -k target/zkv/vk -p target/zkv/proof -i target/zkv/public_inputs > /dev/null )
+  python3 - <<'PYEOF'
+d = "book_attest/target/zkv"
+hx = lambda p: "0x" + open(f"{d}/{p}", "rb").read().hex()
+open(f"{d}/zkv_proof.hex", "w").write(hx("proof") + "\n")
+open(f"{d}/zkv_vk.hex", "w").write(hx("vk") + "\n")
+pubs = open(f"{d}/public_inputs", "rb").read()
+open(f"{d}/zkv_pubs.hex", "w").write(
+    "\n".join("0x" + pubs[i*32:(i+1)*32].hex() for i in range(len(pubs)//32)) + "\n")
+PYEOF
+  cp book_attest/target/zkv/vk "$FIX/zkv_vk.bin"
+  cp book_attest/target/zkv/proof "$FIX/zkv_proof.bin"
+  echo "  zk proof $(wc -c < book_attest/target/zkv/proof | tr -d ' ') B, \
+vk $(wc -c < book_attest/target/zkv/vk | tr -d ' ') B, hex written for zkverify/submit.mjs"
+  exit 0
+fi
 
 if [ "${1:-}" != "--quick" ]; then
   echo "== Solidity verifiers =="
