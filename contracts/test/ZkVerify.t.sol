@@ -66,8 +66,8 @@ contract ZkVerifyTest is Test {
     }
 
     /// The decisive test. Our leaf must equal the statement zkVerify actually
-    /// returned for this proof, not merely match the published formula, which
-    /// describes three components where the pallet hashes four.
+    /// returned for this proof, which is the only way to know the encoding is
+    /// right.
     function test_LeafReproducesTheStatementZkVerifyReturned() public view {
         bytes32[] memory pi = _inputs();
         assertEq(pi.length, 17, "the circuit emits 17 public inputs");
@@ -80,15 +80,15 @@ contract ZkVerifyTest is Test {
         assertEq(leaf, REAL_STATEMENT, "leaf does not reproduce the real statement");
     }
 
-    /// Dropping the version hash, which is what the documentation's three-part
-    /// description leads you to do, produces a leaf that is in no tree anywhere.
-    function test_TheThreePartFormulaFromTheDocsIsWrong() public view {
+    /// Dropping the version hash produces a leaf that is in no tree anywhere,
+    /// so the component is load-bearing rather than decorative.
+    function test_DroppingTheVersionHashBreaksTheLeaf() public view {
         bytes32[] memory pi = _inputs();
         bytes32 threeParts = keccak256(
             abi.encodePacked(keccak256("ultrahonk"), VK_HASH, keccak256(abi.encodePacked(pi)))
         );
-        assertTrue(threeParts != REAL_STATEMENT, "the docs formula would have worked after all");
-        console.log("what the documented three-part formula gives");
+        assertTrue(threeParts != REAL_STATEMENT, "the version hash turned out not to matter");
+        console.log("leaf without the version hash");
         console.logBytes32(threeParts);
     }
 
@@ -138,12 +138,12 @@ contract ZkVerifyTest is Test {
         assertEq(keccak256(abi.encodePacked(REAL_STATEMENT)), REAL_ROOT, "root is not keccak of the leaf");
     }
 
-    /// And hashing the raw vk bytes instead of the SCALE-encoded versioned key is
-    /// the other way to get a leaf that never matches.
-    function test_NaiveVkHashIsWrong() public view {
+    /// And the vk hash has to be the SCALE-encoded one, not a hash of the raw
+    /// bytes.
+    function test_RawVkHashIsNotTheOneThePalletUses() public view {
         bytes32 naive = keccak256(vm.readFileBinary("test/fixtures/zkv_vk.bin"));
         assertTrue(naive != VK_HASH, "raw vk hash happened to match");
-        console.log("keccak256 of the raw vk bytes, which is not what the pallet uses");
+        console.log("keccak256 of the raw vk bytes");
         console.logBytes32(naive);
     }
 
