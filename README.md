@@ -1,87 +1,120 @@
 # Agama x Horizen
 
-**Builder Ecosystem Fund application. Category 1, private borrow-lend protocol.**
-
-Confidential private credit on Horizen, where the loan book stays private and
-the credit risk does not.
+**Technical follow-up to our Builder Ecosystem Fund application.**
+Complementary apps pool, $88,000 requested, submitted 4 September 2026.
 
 ---
 
-## The paper
+## Why this repository exists
 
-### → [`Agama x Horizen - Technical Architecture.pdf`](Agama%20x%20Horizen%20-%20Technical%20Architecture.pdf)
+Section 3 of that application named one problem as genuinely unsolved, in these
+words:
 
-Twenty pages. Read that first. Everything else in this repository exists so you
-can check a claim in it without taking our word for anything.
+> "What remains genuinely unsolved is detecting an issuer that signs
+> accurate-looking but false state. That's an attestation and audit problem, not
+> a cryptographic one, and we don't pretend otherwise."
 
----
-
-## What this application answers
-
-Your review of our first submission contained the sentence that reshaped the
-design:
+The review that came back put the same problem more sharply:
 
 > "If the issuer signs a clean book and the loans are already bad, the TEE and
 > the ZK proof still pass."
 
-That is correct, and no amount of additional cryptography changes it. A trusted
-execution environment attests that code ran on data. A proof attests that
-numbers follow from a commitment. Neither one reaches the world.
+Both are the same observation, and both are correct. A trusted execution
+environment attests that code ran on data. A proof attests that numbers follow
+from a commitment. Neither reaches the world.
 
-So we stopped trying to prevent the lie and made it **falsifiable in public, on
-a fixed clock, without naming a single borrower**.
+So rather than answer with more cryptography, we spent the time doing two
+things: **going through Horizen's stack component by component to see what it
+actually supports**, and reworking the disclosure design around what we found.
 
-| Your observation | What changed |
-| --- | --- |
-| The depositor cannot see maturities or terms | Position count, principal, maturity ladder, delinquency buckets and concentration are published on every attestation, proven against an on-chain commitment. Borrower identity stays private, and we will defend that. |
-| Public is NAV and vault size, so you check arithmetic and not credit | NAV is computed from the proven surface and a public impairment schedule fixed at deployment. The originator has no discretion over its own mark. |
-| A clean signature over a bad book still passes | It still does. The book then misses the cash calendar it published **before** the period began. Repayments arrive on-chain, so the shortfall is arithmetic on two numbers, one of which the originator committed to before it knew the answer. |
-| Weekly redemptions, so the depositor is last to see a run | Weekly gates are gone. The queue is public state and settles at one pro-rata ratio for everyone, so queueing early buys nothing and there is no race to start. |
-| Not a primitive you can diligence on-chain | `IRiskSurface` is a public MIT interface with no Agama dependency, so a Horizen lending market can set an LTV on vault shares programmatically. |
-| Not live mainnet, a testnet vault plus a Vela plan | Vela is off the critical path, for reasons in [`tee/`](tee/). The stack is deployed and the evidence is below. |
+### → [`Agama x Horizen - Technical Architecture.pdf`](Agama%20x%20Horizen%20-%20Technical%20Architecture.pdf)
+
+Twenty-one pages, and the document this repository supports.
 
 ---
 
-## The evidence behind the paper
+## What we exercised of the Horizen stack
 
-| Folder | What is in it | What it backs |
+![What we exercised of the Horizen stack](architecture/assets/horizen-stack-tested.png)
+
+| Component | How far we took it | Where to check it |
 | --- | --- | --- |
-| [`zk/`](zk/) | Two Noir circuits, the scenario generator, the proving script | The risk surface is proven against a committed book, and a revision is proven to descend honestly from the one before it |
-| [`tee/`](tee/) | The Vela stack we ran locally and the five findings it produced | Why Vela is our Phase 2 and not our Phase 1 |
-| [`contracts/`](contracts/) | Registry, vault, `IRiskSurface`, both verifiers, thirty tests | The design survives being attacked, including by us |
-| [`deployment/`](deployment/) | Live testnet addresses, scripts, every transaction hash | It runs on Horizen, and the chain refuses what we say it refuses |
-| [`architecture/`](architecture/) | Source of the paper, rebuild with `./build.sh` | |
-| [`FEASIBILITY.md`](FEASIBILITY.md) | Horizen measured rather than read, with what is live and what is not | |
+| **Vela** | Full v0.2.0 stack run locally. WASM app into the enclave, P-521 key registered, confidential deposit, authority granted on-chain, deanonymisation report decrypted | [`tee/`](tee/) |
+| **Zero knowledge** | Two Noir circuits written, proven, and verified on-chain by Horizen. 3.0 s and 1.2 s to prove, 2,364,745 gas to verify | [`zk/`](zk/) |
+| **Horizen Chain** | Deployed on testnet 2651420 and source-verified on the explorer. Full cycle executed on-chain | [`deployment/`](deployment/) |
+| **PureFi** | Confirmed callable on mainnet, wired into the deposit path so a failed screen reverts the whole transaction | [`0x681Edd49…`](https://horizen-testnet.explorer.caldera.xyz/address/0x681Edd4906e2a0a277E2A6c394A4595f83e1329c) |
+| **zkVerify** | Evaluated and set aside, with a reason | see the paper, section 2.3 |
 
-### Check it without us
+**Two findings changed the architecture rather than confirming it.**
 
-All five contracts are source-verified on the Horizen testnet explorer, chain
-2651420, so the code running at these addresses can be read rather than trusted.
+Vela is not deployed to any testnet or mainnet, and its development stack runs an
+emulated enclave with its keys in plaintext. It leaves the critical path and
+becomes Phase 2, because a hardware guarantee that does not exist yet cannot
+carry a mainnet product.
+
+zkVerify is live, but its EVM contracts are not on Horizen L3, and at 0.001 gwei
+a proof verifies directly on Horizen for about two thirds of a US cent. It
+becomes optional rather than a dependency.
+
+Neither conclusion is one we expected going in, and neither is in the
+application we submitted.
+
+---
+
+## Live on Horizen testnet
+
+Chain 2651420. All five contracts are source-verified, so the code running at
+these addresses can be read rather than trusted.
 
 | | |
 | --- | --- |
 | Registry | [`0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B`](https://horizen-testnet.explorer.caldera.xyz/address/0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B) |
 | Vault | [`0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651`](https://horizen-testnet.explorer.caldera.xyz/address/0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651) |
+| ZK verifier | [`0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA`](https://horizen-testnet.explorer.caldera.xyz/address/0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA) |
+| Revision verifier | [`0xA3C1e81Fdadb5bd098546A4B8FBDfe4169436cF4`](https://horizen-testnet.explorer.caldera.xyz/address/0xA3C1e81Fdadb5bd098546A4B8FBDfe4169436cF4) |
 
 ```sh
 ./deployment/read-state.sh    # reads only, no keys, no trust in us
 ```
 
-Three readings show the mechanism working:
+Every transaction hash is in [`deployment/`](deployment/), including ten attacks
+submitted to the chain and mined as reverts.
 
-```
-scheduledFor(0)       33,487.50 USDC    written once, before the period began
-realizedFor(0)        12,000.00 USDC    only moves when tokens actually arrive
-performanceRatio(0)       35.83 %       computed from the two, by nobody
-```
+---
 
-Read that for what it is. Both figures come from us: the 33,487.50 is the
-monthly interest on a book we generated in [`zk/gen.py`](zk/gen.py), and the
-12,000 is a payment we chose to make short so the shortfall would be visible.
-We authored both sides of the fraction.
+## What changed in the design
 
-What the chain enforces, and we cannot: `scheduled` is written once when the
-surface is published and can never be revised afterwards, `realized` only moves
-on a token transfer that actually settles, and the ratio is derived from the two
-with no one in the loop. The detector is real and was tested. The fire was lit
-by us.
+The application said what stays public is "NAV, aggregate performance, vault size
+and solvency proofs". The review was right that this lets a depositor check
+arithmetic and not credit. The public surface is wider now, and the principle
+behind it is that **confidentiality covers identity, not risk**.
+
+| | |
+| --- | --- |
+| Published every attestation, proven against an on-chain commitment | position count, principal, maturity ladder, delinquency buckets, concentration, and the cash the book is contractually owed over the coming 30 days |
+| Still private, and we defend it | borrower identity, negotiated terms, individual positions |
+| Computed rather than asserted | NAV, from the proven surface and an impairment schedule fixed in code |
+| Observed rather than reported | collections, because repayments settle on-chain |
+
+The consequence is that a clean signature over a bad book still produces a valid
+proof, and then misses the cash calendar it published before the period began.
+The lie stops being undetectable and starts having a half-life of one payment
+period.
+
+The paper works through all of it, along with what remains trusted and what we
+do not claim.
+
+---
+
+## The rest of the repository
+
+[`contracts/`](contracts/) holds a reference implementation of the disclosure
+registry and the vault, with the tests behind the figures in the paper. It is
+there so the architecture can be checked rather than believed, not as a finished
+product: the book behind every number is synthetic, generated by
+[`zk/gen.py`](zk/gen.py), and putting a real originator behind it is the work
+the milestones cover.
+
+[`FEASIBILITY.md`](FEASIBILITY.md) is Horizen measured rather than read: chain
+throughput, gas, live contract addresses, and what the stack does and does not
+support today.
