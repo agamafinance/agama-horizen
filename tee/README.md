@@ -1,6 +1,6 @@
 # Vela, what we ran and what we found
 
-Reproduces the local Vela test described in `../FEASIBILITY.md` section 2.
+Reproduces the local Vela test described in `architecture/FEASIBILITY.md` section 2.
 
 ## Bring up the stack
 
