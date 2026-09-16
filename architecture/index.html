@@ -91,6 +91,16 @@
 
 <section>
 
+  <div class="callout">
+    <strong>Status of this work.</strong> This is an early build, started in
+    response to your review and roughly two weeks old. It is a prototype meant to
+    test whether the approach holds, not a product. The book behind every figure
+    is synthetic, nothing has run on mainnet, there is no originator and no
+    depositor, the attestation circuit is capped at 64 positions, and none of it
+    has been audited. What follows should be read as a design we have taken far
+    enough to trust the shape of, with most of the work still ahead.
+  </div>
+
   <div class="notice">
     <p class="notice-title">Where the evidence for this document lives</p>
     <p>Every claim below is checkable without taking our word for it. The
@@ -101,8 +111,8 @@
         <tr><th style="width:17%">Folder</th><th style="width:43%">Contents</th><th>Sections it backs</th></tr>
       </thead>
       <tbody>
-        <tr><td><code>zk/</code></td><td><code>book_attest</code> and <code>book_delta</code> Noir circuits, the scenario generator, and the proving script that also runs the backdating attack on every build</td><td><a href="#s4">4</a>, <a href="#s4-4">4.4</a>, <a href="#s5-1">5.1</a></td></tr>
-        <tr><td><code>tee/</code></td><td>The full Vela stack we ran locally, the confidential lifecycle we executed on it, and the five findings that took it off our critical path</td><td><a href="#s2-2">2.2</a>, <a href="#s9">9</a></td></tr>
+        <tr><td><code>zk/</code></td><td><code>book_attest</code> and <code>book_delta</code> <a href="https://noir-lang.org/">Noir</a> circuits, the scenario generator, and the proving script that also runs the backdating attack on every build</td><td><a href="#s4">4</a>, <a href="#s4-4">4.4</a>, <a href="#s5-1">5.1</a></td></tr>
+        <tr><td><code>tee/</code></td><td>The full <a href="https://github.com/HorizenOfficial/vela-starterkit">Vela stack</a> we ran locally, the confidential lifecycle we executed on it, and the five findings that took it off our critical path</td><td><a href="#s2-2">2.2</a>, <a href="#s9">9</a></td></tr>
         <tr><td><code>contracts/</code></td><td>Registry, vault, <code>IRiskSurface</code>, both generated verifiers, and thirty tests: fork, adversarial and stateful invariant</td><td><a href="#s5">5</a>, <a href="#s6">6</a>, <a href="#s8-2">8.2</a></td></tr>
         <tr><td><code>deployment/</code></td><td>The live Horizen testnet deployment: scripts, addresses, every transaction hash, and a reader that dumps the public surface using only <code>eth_call</code></td><td><a href="#s8-1">8.1</a></td></tr>
       </tbody>
@@ -241,9 +251,13 @@
   <h3 id="s2-2">2.2 Vela, Measured</h3>
 
   <p>We ran Vela rather than reading about it. The full v0.2.0 stack from
-  <code>HorizenOfficial/vela-starterkit</code> was brought up locally and a complete
-  confidential lifecycle executed. Every command, and the five findings it
-  produced, are in <code>tee/README.md</code>:</p>
+  <a href="https://github.com/HorizenOfficial/vela-starterkit">HorizenOfficial/vela-starterkit</a>
+  was brought up locally, nine containers, and a complete confidential lifecycle executed using
+  the reference application and wallet from
+  <a href="https://github.com/HorizenOfficial/vela-nova/releases/tag/v0.2.0">vela-nova v0.2.0</a>.
+  The contracts we read to establish what leaks are in
+  <a href="https://github.com/HorizenOfficial/vela">HorizenOfficial/vela</a>. Every command, and
+  the five findings it produced, are in <code>tee/README.md</code>:</p>
 
   <ul>
     <li>WASM application deployed into the enclave, application ID <code>7335106231336828932</code>.</li>
@@ -260,24 +274,26 @@
 
   <p class="label">Where Vela actually is, because two Horizen pages disagree</p>
 
-  <p><code>docs.horizen.io/vela/limitations</code> states that Vela &ldquo;is not yet deployed
+  <p><a href="https://docs.horizen.io/vela/limitations/"><code>docs.horizen.io/vela/limitations</code></a>
+  states that Vela &ldquo;is not yet deployed
   to any testnet or mainnet environment&rdquo; and that the development environment &ldquo;uses
   an emulated Trusted Execution Environment rather than hardware enclaves&rdquo;. The local
   stack matches that description: <code>TEE_NO_ATTESTATION=true</code>, and all three enclave
   keys sit in plaintext in the shipped <code>.env.dev</code>.</p>
 
-  <p>The product's own page says something different, and more favourable. Vela launched
+  <p><a href="https://horizenlabs.io/vela">The product's own page</a> says something different,
+  and more favourable. Vela launched
   publicly on 16 March 2026 and is <strong>&ldquo;live on Base Sepolia for early-access
   developers&rdquo;</strong>, with a first roadmap phase listed in this order:</p>
 
   <table class="bold-first">
     <thead>
-      <tr><th style="width:8%">Step</th><th>Horizen Labs' own wording</th><th style="width:16%">Status</th></tr>
+      <tr><th style="width:8%">Step</th><th>Horizen Labs' own wording</th><th style="width:22%">Where Horizen is</th></tr>
     </thead>
     <tbody>
-      <tr><td>1</td><td>&ldquo;Live on Base Sepolia for early-access developers&rdquo;</td><td>done</td></tr>
-      <tr><td>2</td><td>&ldquo;Promote to Base mainnet&rdquo;</td><td>ahead</td></tr>
-      <tr><td>3</td><td><strong>&ldquo;Deploy to Horizen testnet and mainnet&rdquo;</strong></td><td>ahead</td></tr>
+      <tr><td>1</td><td>&ldquo;Live on Base Sepolia for early-access developers&rdquo;</td><td>shipped by them</td></tr>
+      <tr><td>2</td><td>&ldquo;Promote to Base mainnet&rdquo;</td><td>ahead of them</td></tr>
+      <tr><td>3</td><td><strong>&ldquo;Deploy to Horizen testnet and mainnet&rdquo;</strong></td><td>ahead of them, and what we wait on</td></tr>
     </tbody>
   </table>
 
@@ -335,7 +351,8 @@
 
   <h3 id="s2-3">2.3 zkVerify</h3>
 
-  <p>zkVerify is live as its own L1 and its EVM verification contracts are deployed on Base,
+  <p><a href="https://docs.zkverify.io/">zkVerify</a> is live as its own L1 and its EVM
+  verification contracts are deployed on Base,
   Sepolia, Base Sepolia, Arbitrum Sepolia, Optimism Sepolia and EDU Chain Testnet.
   <strong>Not on Horizen L3.</strong> Consuming a zkVerify aggregation from a Horizen contract
   would require a relayer that Horizen does not currently run.</p>
@@ -349,16 +366,16 @@
 
   <table class="bold-first">
     <thead>
-      <tr><th style="width:30%">Component</th><th style="width:40%">Status</th><th>Phase 1</th></tr>
+      <tr><th style="width:30%">Component</th><th style="width:40%">What we found</th><th>Where we are</th></tr>
     </thead>
     <tbody>
-      <tr><td>Horizen mainnet, EVM, ERC-4626</td><td>Live, 1 s blocks, effectively free gas</td><td><span class="pill">Yes</span></td></tr>
-      <tr><td>USDC.e</td><td>Live, 3,166 USDC outstanding</td><td><span class="pill">Yes</span></td></tr>
-      <tr><td>PureFi AML and KYC</td><td>Live, verified callable</td><td><span class="pill">Yes</span></td></tr>
-      <tr><td>On-chain ZK verification</td><td>2,178,509 gas on a mainnet fork, 2,364,745 live on testnet</td><td><span class="pill">Yes</span></td></tr>
-      <tr><td>Stork oracle</td><td>Live</td><td class="no">Not needed</td></tr>
-      <tr><td>zkVerify</td><td>Live, not deployed on Horizen L3</td><td class="no">No</td></tr>
-      <tr><td>Vela TEE</td><td>Live on Base Sepolia for early-access developers, not yet on Horizen</td><td class="no">Phase 2</td></tr>
+      <tr><td>Horizen mainnet, EVM, ERC-4626</td><td>Live, 1 s blocks, effectively free gas</td><td>in use</td></tr>
+      <tr><td>USDC.e</td><td>Live, 3,166 USDC outstanding</td><td>in use</td></tr>
+      <tr><td>PureFi AML and KYC</td><td>Live, verified callable</td><td>in use</td></tr>
+      <tr><td>On-chain ZK verification</td><td>2,178,509 gas on a mainnet fork, 2,364,745 live on testnet</td><td>in use</td></tr>
+      <tr><td>Stork oracle</td><td>Live</td><td class="no">not needed yet</td></tr>
+      <tr><td>zkVerify</td><td>Live, not deployed on Horizen L3</td><td class="no">set aside</td></tr>
+      <tr><td>Vela TEE</td><td>Live on Base Sepolia for early-access developers, not yet on Horizen</td><td class="no">waiting on step 3</td></tr>
     </tbody>
   </table>
 
@@ -386,7 +403,7 @@
 
   <table class="bold-first">
     <thead>
-      <tr><th style="width:17%">Component</th><th style="width:20%">How far we took it</th><th>Where to check it</th></tr>
+      <tr><th style="width:17%">Component</th><th style="width:20%">How far we have taken it so far</th><th>Where to check it</th></tr>
     </thead>
     <tbody>
       <tr>
@@ -520,9 +537,14 @@
 
   <h2 id="s4">4. The Attestation Circuit</h2>
 
-  <p>Source in <code>zk/book_attest</code>. <code>zk/prove.sh</code> rebuilds every proof
-  quoted in this document from scratch, and fails the build if the backdating attack in
-  <a href="#s4-4">Section 4.4</a> ever produces a valid proof.</p>
+  <p>Source in <code>zk/book_attest</code>, written in
+  <a href="https://noir-lang.org/">Noir</a> and proven with
+  <a href="https://github.com/AztecProtocol/barretenberg">Barretenberg</a>'s UltraHonk backend.
+  <code>zk/prove.sh</code> rebuilds every proof quoted in this document from scratch, and fails
+  the build if the backdating attack in <a href="#s4-4">Section 4.4</a> ever produces a valid
+  proof. The generated verifier is deployed and source-verified on Horizen at
+  <a href="https://horizen-testnet.explorer.caldera.xyz/address/0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA"><code>0xb95B3603&#8230;</code></a>,
+  so a proof in this document can be checked against the contract that accepted it.</p>
 
   <h3 id="s4-1">4.1 Statement Proven</h3>
 
@@ -894,17 +916,17 @@ if (maxCommittedTs &gt; committedAt) revert LeafBackdated();</code></pre>
     <tbody>
       <tr>
         <td>Credit-level detail: borrowers, maturities, negotiated terms</td>
-        <td><strong>Delivered</strong></td>
+        <td><strong>Working prototype</strong></td>
         <td>Commitments plus zero-knowledge proofs, verified on Horizen. Needs nothing that is not already live.</td>
       </tr>
       <tr>
         <td>Depositor positions and identities</td>
-        <td class="no">Not in this design</td>
+        <td class="no">Not started</td>
         <td>The vault is ERC-4626, so share balances are public. Hiding them needs a confidential ledger, which is exactly what Vela provides and what we ran locally. It is Phase 2 and it is blocked on Vela shipping.</td>
       </tr>
       <tr>
         <td>Pending redemptions, confidential until execution</td>
-        <td class="no">Deliberately inverted</td>
+        <td class="no">Deliberately inverted for now</td>
         <td>The review made the opposite point: a depositor should not be last to learn others are leaving. Both concerns are real and the resolution is in <a href="#s9">Section 9</a>, not in a choice between them.</td>
       </tr>
     </tbody>
@@ -941,11 +963,11 @@ if (maxCommittedTs &gt; committedAt) revert LeafBackdated();</code></pre>
       <tr><th style="width:32%">Contract</th><th>Address</th></tr>
     </thead>
     <tbody>
-      <tr><td>CreditDisclosureRegistry</td><td><code>0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B</code></td></tr>
-      <tr><td>AgamaCreditVault</td><td><code>0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651</code></td></tr>
-      <tr><td>HonkVerifier</td><td><code>0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA</code></td></tr>
-      <tr><td>DeltaVerifier</td><td><code>0xA3C1e81Fdadb5bd098546A4B8FBDfe4169436cF4</code></td></tr>
-      <tr><td>Test stablecoin</td><td><code>0xd0c379C0cD56b62fd9c2fE8913aa261f8096164e</code></td></tr>
+      <tr><td>CreditDisclosureRegistry</td><td><a href="https://horizen-testnet.explorer.caldera.xyz/address/0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B"><code>0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B</code></a></td></tr>
+      <tr><td>AgamaCreditVault</td><td><a href="https://horizen-testnet.explorer.caldera.xyz/address/0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651"><code>0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651</code></a></td></tr>
+      <tr><td>HonkVerifier</td><td><a href="https://horizen-testnet.explorer.caldera.xyz/address/0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA"><code>0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA</code></a></td></tr>
+      <tr><td>DeltaVerifier</td><td><a href="https://horizen-testnet.explorer.caldera.xyz/address/0xA3C1e81Fdadb5bd098546A4B8FBDfe4169436cF4"><code>0xA3C1e81Fdadb5bd098546A4B8FBDfe4169436cF4</code></a></td></tr>
+      <tr><td>Test stablecoin</td><td><a href="https://horizen-testnet.explorer.caldera.xyz/address/0xd0c379C0cD56b62fd9c2fE8913aa261f8096164e"><code>0xd0c379C0cD56b62fd9c2fE8913aa261f8096164e</code></a></td></tr>
     </tbody>
   </table>
 
