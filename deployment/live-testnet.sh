@@ -146,12 +146,21 @@ read_u "totalAssets"        "$VAULT" "totalAssets()(uint256)"
 read_u "firstLossRemaining" "$VAULT" "firstLossRemaining()(uint256)"
 read_u "exposure"           "$VAULT" "exposure()(uint256)"
 
-python3 - "$USDC" "$VER" "$DVER" "$REG" "$VAULT" "$ROOT0" "$GEN" > "$OUT" <<'PY'
+python3 - "$USDC" "$VER" "$DVER" "$REG" "$VAULT" "$ROOT0" "$GEN" \
+        "$T0" "$T1" "$TC0" > "$OUT" <<'PY'
 import json, sys
 k = ["testUSDC","honkVerifier","deltaVerifier","registry","vault","genesisRoot","epochGenesis"]
 d = dict(zip(k, sys.argv[1:8]))
 d["chainId"] = 2651420
 d["explorer"] = "https://horizen-testnet.explorer.caldera.xyz"
+# The three clock values this run chose. A book root binds its valuation date,
+# so without these the roots below cannot be regenerated after the fact:
+#   AGAMA_AS_OF_0=... AGAMA_AS_OF_1=... AGAMA_PREV_COMMIT=... python3 ../zk/gen.py
+d["reproduce"] = {
+    "AGAMA_AS_OF_0": sys.argv[8],
+    "AGAMA_AS_OF_1": sys.argv[9],
+    "AGAMA_PREV_COMMIT": sys.argv[10],
+}
 print(json.dumps(d, indent=2))
 PY
 say "done"
