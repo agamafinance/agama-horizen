@@ -1,0 +1,13 @@
+{
+  "chainId": 84532,
+  "explorer": "https://base-sepolia.blockscout.com",
+  "consumerOnLiveZkVerify": "0x7FcA842Ce1e27270E24d828a340B48083f237212",
+  "consumerOnStandIn": "0xB29E7b13C2c84AFADe8dFd143dD1d0140F6AbF4a",
+  "aggregationStandIn": "0x2A719C5c053d66Dcb029110DB420d8191b287b54",
+  "zkVerifyAggregationContract": "0x312468EbF274F1f584d93d0CCA8458cC91460FC0",
+  "admitTx": "0x5a88bdb53750a016cd498cdd1d7a4d1c74a4384aa10f3d8d24c45a31cfe3c8b1",
+  "domainId": 10,
+  "aggregationId": 2,
+  "root": "0xb2ee6f0eb55cd0a4452c30da159adcfda7e6c0f227a22cb30c39229416946564",
+  "statement": "0x0f3c234e17e8b7c35e1621b7f6b183a99998a5a25fc42db4760fb357905af730"
+}

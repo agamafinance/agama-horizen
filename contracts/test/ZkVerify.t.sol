@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {Test, console} from "forge-std/Test.sol";
 import {ZkVerifyRiskSurface, IZkVerifyAggregation} from "../src/ZkVerifyRiskSurface.sol";
+import {AggregationStandIn} from "../src/AggregationStandIn.sol";
 import {IRiskSurface} from "../src/IRiskSurface.sol";
 
 /// @notice Two things are being checked here, and they are different in kind.
@@ -89,6 +90,42 @@ contract ZkVerifyTest is Test {
         assertTrue(threeParts != REAL_STATEMENT, "the docs formula would have worked after all");
         console.log("what the documented three-part formula gives");
         console.logBytes32(threeParts);
+    }
+
+    /// The whole path, against the root zkVerify actually published. The
+    /// aggregation contract here is a stand-in holding that real root, because
+    /// no zkVerify domain relays to any EVM chain today: on both Volta and
+    /// mainnet, hp_dispatch::Destination has one variant and it is None. One hop
+    /// is simulated, the rest is the real thing.
+    function test_RealAggregationAdmitsTheRealSurface() public {
+        AggregationStandIn standIn = new AggregationStandIn(10, 2, REAL_ROOT);
+        ZkVerifyRiskSurface consumer = new ZkVerifyRiskSurface(address(standIn), VK_HASH, 10);
+
+        bytes32[] memory pi = _inputs();
+        bytes32[] memory emptyPath = new bytes32[](0);
+
+        uint256 g = gasleft();
+        consumer.admit(2, emptyPath, 1, 0, pi);
+        console.log("gas to admit against the real zkVerify root", g - gasleft());
+
+        IRiskSurface.Surface memory s = consumer.surface();
+        assertEq(s.positions, 22);
+        assertEq(s.totalPrincipal, 4_760_000e6);
+        assertEq(s.top1, 1_050_000e6);
+        assertEq(consumer.admittedAggregationId(), 2);
+    }
+
+    /// A surface that was never aggregated is refused by the same path.
+    function test_RealRootRefusesASurfaceItDoesNotCover() public {
+        AggregationStandIn standIn = new AggregationStandIn(10, 2, REAL_ROOT);
+        ZkVerifyRiskSurface consumer = new ZkVerifyRiskSurface(address(standIn), VK_HASH, 10);
+
+        bytes32[] memory pi = _inputs();
+        pi[3] = bytes32(uint256(9_999_999e6)); // inflate the principal
+        bytes32[] memory emptyPath = new bytes32[](0);
+
+        vm.expectRevert(ZkVerifyRiskSurface.NotAggregated.selector);
+        consumer.admit(2, emptyPath, 1, 0, pi);
     }
 
     /// zkVerify's tree hashes the leaf at the bottom, so a single-leaf

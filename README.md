@@ -49,7 +49,7 @@ Twenty-two pages, and the document this repository supports.
 | **Zero knowledge** | Two [Noir](https://noir-lang.org/) circuits written, proven, and verified on-chain by Horizen. 3.0 s and 1.2 s to prove, 2,364,745 gas to verify | [`zk/`](zk/) |
 | **Horizen Chain** | Deployed on testnet 2651420 and source-verified on the explorer. Full cycle executed on-chain | [`deployment/`](deployment/) |
 | **PureFi** | Confirmed callable on mainnet, wired into the deposit path so a failed screen reverts the whole transaction | [`0x681Edd49…`](https://horizen-testnet.explorer.caldera.xyz/address/0x681Edd4906e2a0a277E2A6c394A4595f83e1329c) |
-| **[zkVerify](https://docs.zkverify.io/)** | Integration built and tested. Proof accepted in the zk flavour, consumer contract written, live aggregation contract on Base Sepolia probed on a fork. Measured at 237,795 gas against 2,364,745 direct | [`zk/zkverify/`](zk/zkverify/) |
+| **[zkVerify](https://docs.zkverify.io/)** | Proof verified and aggregated by zkVerify on Volta. Consumer deployed and source-verified on Base Sepolia, where it recomputes zkVerify's statement on-chain and admits the surface for 266,041 gas against 2,364,745 direct | [`zk/zkverify/`](zk/zkverify/), [`deployment/base-sepolia.md`](deployment/base-sepolia.md) |
 
 **Two findings have already changed the architecture rather than confirming it.**
 
@@ -65,10 +65,11 @@ different chain than ours is still one we cannot ship against today. It stays
 Phase 2, and Phase 2 is a bet on when a committed roadmap item reaches this
 chain rather than on whether the technology works.
 
-zkVerify accepts our proofs unchanged and its aggregation contract is live on
-Base Sepolia, which we probed rather than assumed. But there is no aggregation
-contract on Horizen L3 and no relayer route to one, so a Horizen contract cannot
-consume an aggregation today. At 0.001 gwei a proof also verifies directly here
+zkVerify verified our proof and published the aggregation. But no domain relays a
+root to an EVM chain: on Volta and on mainnet alike, `hp_dispatch::Destination`
+has one variant and it is `None`, so that hop runs on a relayer zkVerify
+operates rather than on anything an application configures. And there is no
+aggregation contract on Horizen L3 at all. At 0.001 gwei a proof also verifies directly here
 for about two thirds of a cent, so the order of magnitude the route saves is
 worth a tenth of a cent. It becomes an option rather than a dependency, and the
 integration is built so the choice can be revisited on a chain where the
