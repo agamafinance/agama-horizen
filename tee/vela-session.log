@@ -1,0 +1,198 @@
+# Captured from the local Vela v0.2.0 stack, 15 September 2026.
+# Reproduce with the steps in README.md. Emulated enclave, so the
+# attestation is not a real Nitro one: that is the point of Phase 2.
+
+## docker logs vela-skit-executor
+2026-Sep-15 19:45:36.627  Runtime: Initializing wasmtime runtime (maxCachedModules=0)
+2026-Sep-15 19:45:36.641  Executor version: v0.2.0
+2026-Sep-15 19:45:36.641  Starting executor service...
+2026-Sep-15 19:45:36.641  Executor: Starting TCP executor server
+2026-Sep-15 19:45:36.647  Executor: server listening on tcp 10.10.40.10:4000
+2026-Sep-15 19:45:36.647  Executor started
+2026-Sep-15 19:45:42.350  Executor: New client connected from 10.10.40.20:47756
+2026-Sep-15 19:45:42.350  Executor: Entering message reader loop!
+2026-Sep-15 19:45:42.350  Executor: New connection established, starting handshake
+2026-Sep-15 19:45:42.351  Executor: Performing key recovery handshake (Type 0)
+2026-Sep-15 19:45:42.351  Executor: Sending GetKeysetRecoveryRequestMessage (type 4) msg to Manager
+2026-Sep-15 19:45:42.356  Executor: Received message: ID=a5f70a2526f2566b97215a580bcc8602, Type=5
+2026-Sep-15 19:45:42.357  Executor: Keyset recovery data not found, generating new keyset (Type 0)...
+2026-Sep-15 19:45:42.367  Executor: sending key set recovery to manager
+2026-Sep-15 19:45:42.369  Executor: Received message: ID=74bc10bb3ba7324ff765e9b75678c434, Type=7
+2026-Sep-15 19:45:42.369  Executor: New keyset generated and sent to manager for storage
+2026-Sep-15 19:45:42.369  ###: Communication key P521 (public): 0x040169e59d61259de5a058803f45aae58beeeec1511b9617aa896bc923ec11347cbb84c580793d424971c53d90dfe2f91266179146bb355a75c6ce537acbb2d5e02a8a011833655720c92a674e054c92d81604eacc25513d524f51caa5d6741129b2ed4be9dfe351174d53a062afba6eaf5775c5ae0e4c351033e583f8b873493ec8b45f58
+2026-Sep-15 19:45:42.369  ###: Signing key Secp256k1 (public):  0x044b3c2399c98fe4162f5231e7937051c8d78c498fbcfba8d9e4a1ac1fc556ccf59013988d9436d1d1551ed3e32c1b63a28413ad760ee8a3b482ad5db7b9a24cda
+2026-Sep-15 19:45:42.369  ###:             Secp256k1 (address): 0x0x2a0fba02cee7fb70899648037c7E8203881e2D55
+2026-Sep-15 19:45:42.369  Executor: Handshake successful
+2026-Sep-15 20:14:39.787  Executor service stopped
+
+## docker logs vela-skit-manager
+2026-Sep-15 19:45:42.321  Manager version: v0.2.0
+2026-Sep-15 19:45:42.324  Initializing manager...
+2026-Sep-15 19:45:42.349  Starting manager...
+2026-Sep-15 19:45:42.349  Manager: startup sequence begin
+2026-Sep-15 19:45:42.349  Manager: starting admin command server on 0.0.0.0:4002
+2026-Sep-15 19:45:42.349  Manager: admin command server started
+2026-Sep-15 19:45:42.349  Manager: connecting to executor...
+2026-Sep-15 19:45:42.350  Manager: Entering message reader loop!
+2026-Sep-15 19:45:42.350  Manager: connected to executor
+2026-Sep-15 19:45:42.350  Manager: Waiting for the executor to complete the handshake...
+2026-Sep-15 19:45:42.353  Manager: Received message: ID=a5f70a2526f2566b97215a580bcc8602, Type=4
+2026-Sep-15 19:45:42.353  Manager: got message GetKeysetRecoveryRequestMessage type: 4
+2026-Sep-15 19:45:42.353  Manager: entering github.com/HorizenOfficial/vela/pkg/communication.(*Client).handleGetKeysetRecoveryRequest
+2026-Sep-15 19:45:42.353  Manager: Received GetKeysetRecovery message from executor
+2026-Sep-15 19:45:42.353  Manager: could not get keyset recovery data: enclave key set recovery data not found
+2026-Sep-15 19:45:42.354  Manager: KeysetRecovery not found in data layer: enclave key set recovery data not found
+2026-Sep-15 19:45:42.354  Manager: Sending GetKeysetRecoveryResponseMessage to executor
+2026-Sep-15 19:45:42.367  Manager: Received message: ID=74bc10bb3ba7324ff765e9b75678c434, Type=6
+2026-Sep-15 19:45:42.367  Manager: got message SetKeysetRecoveryRequestMessage type: 6
+2026-Sep-15 19:45:42.368  Manager: Received SetKeysetRecovery message from executor
+2026-Sep-15 19:45:42.369  Manager: KeysetRecovery data stored in data layer
+2026-Sep-15 19:45:42.369  Manager: Executor's public communication key (P521): 040169e59d61259de5a058803f45aae58beeeec1511b9617aa896bc923ec11347cbb84c580793d424971c53d90dfe2f91266179146bb355a75c6ce537acbb2d5e02a8a011833655720c92a674e054c92d81604eacc25513d524f51caa5d6741129b2ed4be9dfe351174d53a062afba6eaf5775c5ae0e4c351033e583f8b873493ec8b45f58
+2026-Sep-15 19:45:42.369  Manager: Executor's signing key address (Secp256k1): 0x2a0fba02cee7fb70899648037c7E8203881e2D55
+2026-Sep-15 19:45:42.369  Manager: setting handshake as completed
+2026-Sep-15 19:45:42.369  Manager: SetKeysetRecoveryRequest handled successfully, ID=74bc10bb3ba7324ff765e9b75678c434
+2026-Sep-15 19:45:42.369  Manager: ... executor completed handshake! Continuing execution.
+2026-Sep-15 19:45:42.369  Manager: connecting to blockchain node at http://10.10.40.30:8545...
+2026-Sep-15 19:45:42.377  Manager: connected to blockchain node
+2026-Sep-15 19:45:42.377  Manager: startup sequence complete - Ethereum address: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
+2026-Sep-15 19:45:42.377  Manager started
+2026-Sep-15 19:45:36.627  Runtime: Initializing wasmtime runtime (maxCachedModules=0)
+2026-Sep-15 19:45:36.641  Executor version: v0.2.0
+2026-Sep-15 19:45:36.641  Starting executor service...
+2026-Sep-15 19:45:36.641  Executor: Starting TCP executor server
+2026-Sep-15 19:45:36.647  Executor: server listening on tcp 10.10.40.10:4000
+2026-Sep-15 19:45:36.647  Executor started
+2026-Sep-15 19:45:42.350  Executor: New client connected from 10.10.40.20:47756
+2026-Sep-15 19:45:42.350  Executor: Entering message reader loop!
+2026-Sep-15 19:45:42.350  Executor: New connection established, starting handshake
+2026-Sep-15 19:45:42.351  Executor: Performing key recovery handshake (Type 0)
+2026-Sep-15 19:45:42.351  Executor: Sending GetKeysetRecoveryRequestMessage (type 4) msg to Manager
+2026-Sep-15 19:45:42.356  Executor: Received message: ID=a5f70a2526f2566b97215a580bcc8602, Type=5
+2026-Sep-15 19:45:42.357  Executor: Keyset recovery data not found, generating new keyset (Type 0)...
+2026-Sep-15 19:45:42.367  Executor: sending key set recovery to manager
+2026-Sep-15 19:45:42.369  Executor: Received message: ID=74bc10bb3ba7324ff765e9b75678c434, Type=7
+2026-Sep-15 19:45:42.369  Executor: New keyset generated and sent to manager for storage
+2026-Sep-15 19:45:42.369  ###: Communication key P521 (public): 0x040169e59d61259de5a058803f45aae58beeeec1511b9617aa896bc923ec11347cbb84c580793d424971c53d90dfe2f91266179146bb355a75c6ce537acbb2d5e02a8a011833655720c92a674e054c92d81604eacc25513d524f51caa5d6741129b2ed4be9dfe351174d53a062afba6eaf5775c5ae0e4c351033e583f8b873493ec8b45f58
+2026-Sep-15 19:45:42.369  ###: Signing key Secp256k1 (public):  0x044b3c2399c98fe4162f5231e7937051c8d78c498fbcfba8d9e4a1ac1fc556ccf59013988d9436d1d1551ed3e32c1b63a28413ad760ee8a3b482ad5db7b9a24cda
+2026-Sep-15 19:45:42.369  ###:             Secp256k1 (address): 0x0x2a0fba02cee7fb70899648037c7E8203881e2D55
+2026-Sep-15 19:45:42.369  Executor: Handshake successful
+2026-Sep-15 19:45:42.321  Manager version: v0.2.0
+2026-Sep-15 19:45:42.324  Initializing manager...
+2026-Sep-15 19:45:42.349  Starting manager...
+2026-Sep-15 19:45:42.349  Manager: startup sequence begin
+2026-Sep-15 19:45:42.349  Manager: starting admin command server on 0.0.0.0:4002
+2026-Sep-15 19:45:42.349  Manager: admin command server started
+2026-Sep-15 19:45:42.349  Manager: connecting to executor...
+2026-Sep-15 19:45:42.350  Manager: Entering message reader loop!
+2026-Sep-15 19:45:42.350  Manager: connected to executor
+2026-Sep-15 19:45:42.350  Manager: Waiting for the executor to complete the handshake...
+2026-Sep-15 19:45:42.353  Manager: Received message: ID=a5f70a2526f2566b97215a580bcc8602, Type=4
+2026-Sep-15 19:45:42.353  Manager: got message GetKeysetRecoveryRequestMessage type: 4
+2026-Sep-15 19:45:42.353  Manager: entering github.com/HorizenOfficial/vela/pkg/communication.(*Client).handleGetKeysetRecoveryRequest
+2026-Sep-15 19:45:42.353  Manager: Received GetKeysetRecovery message from executor
+2026-Sep-15 19:45:42.353  Manager: could not get keyset recovery data: enclave key set recovery data not found
+2026-Sep-15 19:45:42.354  Manager: KeysetRecovery not found in data layer: enclave key set recovery data not found
+2026-Sep-15 19:45:42.354  Manager: Sending GetKeysetRecoveryResponseMessage to executor
+2026-Sep-15 19:45:42.367  Manager: Received message: ID=74bc10bb3ba7324ff765e9b75678c434, Type=6
+2026-Sep-15 19:45:42.367  Manager: got message SetKeysetRecoveryRequestMessage type: 6
+2026-Sep-15 19:45:42.368  Manager: Received SetKeysetRecovery message from executor
+2026-Sep-15 19:45:42.369  Manager: KeysetRecovery data stored in data layer
+2026-Sep-15 19:45:42.369  Manager: Executor's public communication key (P521): 040169e59d61259de5a058803f45aae58beeeec1511b9617aa896bc923ec11347cbb84c580793d424971c53d90dfe2f91266179146bb355a75c6ce537acbb2d5e02a8a011833655720c92a674e054c92d81604eacc25513d524f51caa5d6741129b2ed4be9dfe351174d53a062afba6eaf5775c5ae0e4c351033e583f8b873493ec8b45f58
+2026-Sep-15 19:45:42.369  Manager: Executor's signing key address (Secp256k1): 0x2a0fba02cee7fb70899648037c7E8203881e2D55
+2026-Sep-15 19:45:42.369  Manager: setting handshake as completed
+2026-Sep-15 19:45:42.369  Manager: SetKeysetRecoveryRequest handled successfully, ID=74bc10bb3ba7324ff765e9b75678c434
+2026-Sep-15 19:45:42.369  Manager: ... executor completed handshake! Continuing execution.
+2026-Sep-15 19:45:42.369  Manager: connecting to blockchain node at http://10.10.40.30:8545...
+2026-Sep-15 19:45:42.377  Manager: connected to blockchain node
+2026-Sep-15 19:45:42.377  Manager: startup sequence complete - Ethereum address: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
+2026-Sep-15 19:45:42.377  Manager started
+2026-Sep-15 19:47:37.380  Manager: processing request 65cb88411c960004efbc8171d4116c65e39d9972bf3eaa43f6e799a1bcb38e3d
+2026-Sep-15 19:47:37.381  Processing deploy app request: 65cb88411c960004efbc8171d4116c65e39d9972bf3eaa43f6e799a1bcb38e3d
+2026-Sep-15 19:47:37.418  Executor: Received message: ID=10216bb2e391264209bfc7b77a869b10, Type=2
+2026-Sep-15 19:47:37.432  Executor: Deploying application for request 65cb88411c960004efbc8171d4116c65e39d9972bf3eaa43f6e799a1bcb38e3d
+2026-Sep-15 19:47:37.436  Wasmtime Runtime: Deploying WASM module for application 7335106231336828932 (wasm size: 810693 bytes, params size: 0 bytes)
+2026-Sep-15 19:47:38.289  Creating named log pipe
+2026-Sep-15 19:47:38.290  Installing log pipes
+2026-Sep-15 19:47:38.291  Installed stdout log pipe
+2026-Sep-15 19:47:38.291  Installed stderr log pipe
+2026-Sep-15 19:47:38.335  Wasmtime Runtime: Successfully deployed WASM module for application 7335106231336828932
+2026-Sep-15 19:47:38.335  Executor: Successfully encrypted initial app data
+2026-Sep-15 19:47:38.337  Executor: Successfully deployed application 7335106231336828932
+2026-Sep-15 19:47:38.337  Executor: DeployApp handled successfully, ID=10216bb2e391264209bfc7b77a869b10
+2026-Sep-15 19:47:38.338  Manager: Received message: ID=10216bb2e391264209bfc7b77a869b10, Type=3
+2026-Sep-15 19:47:38.338  Storing app state and WASM, versionID 7da35f4e84b954f204c30c3e8ad9c82bd5ae368dc8552f9dcfb39ceb03810035
+2026-Sep-15 19:47:38.348  Deployed application, submit the state update to the blockchain
+2026-Sep-15 19:47:39.367  Manager: Processed request 65cb88411c960004efbc8171d4116c65e39d9972bf3eaa43f6e799a1bcb38e3d for application 7335106231336828932
+2026-Sep-15 19:47:39.367  Manager: Processed request 65cb88411c960004efbc8171d4116c65e39d9972bf3eaa43f6e799a1bcb38e3d
+2026-Sep-15 19:47:47.382  Manager: processing request 1307c71096a338abd77abad6cda058f7553725e0049bc7c9467eeb7c3441aab2
+2026-Sep-15 19:47:47.382  Processing Process app request: 1307c71096a338abd77abad6cda058f7553725e0049bc7c9467eeb7c3441aab2 (type: associatekey)
+2026-Sep-15 19:47:47.395  Executor: Received message: ID=0d0b7804d715ac983e2cd389c6a034b8, Type=0
+2026-Sep-15 19:47:47.404  Executor: Processing request 1307c71096a338abd77abad6cda058f7553725e0049bc7c9467eeb7c3441aab2 for application 7335106231336828932
+2026-Sep-15 19:47:47.405  Executor: Successfully decrypted application state
+2026-Sep-15 19:47:47.408  Associating new key - RequestID 1307c71096a338abd77abad6cda058f7553725e0049bc7c9467eeb7c3441aab2
+2026-Sep-15 19:47:47.411  Executor: Successfully encrypted new application data
+2026-Sep-15 19:47:47.412  Executor: Successfully processed request 1307c71096a338abd77abad6cda058f7553725e0049bc7c9467eeb7c3441aab2
+2026-Sep-15 19:47:47.412  Executor: ProcessRequest handled successfully, ID=0d0b7804d715ac983e2cd389c6a034b8
+2026-Sep-15 19:47:47.412  Manager: Received message: ID=0d0b7804d715ac983e2cd389c6a034b8, Type=1
+2026-Sep-15 19:47:47.412  Storing app state, versionID d236efdc5674cf3d1658fcd08a1ec8047a0aed4d23d9d96d7c78c37f695b60f5
+2026-Sep-15 19:47:48.422  Manager: Processed request 1307c71096a338abd77abad6cda058f7553725e0049bc7c9467eeb7c3441aab2 for application 7335106231336828932
+2026-Sep-15 19:47:48.423  Manager: Processed request 1307c71096a338abd77abad6cda058f7553725e0049bc7c9467eeb7c3441aab2
+2026-Sep-15 19:47:52.376  Manager: processing request c7e328620cbc25ad22fc084e92491669069bd8f1d2b16eda4c23ef40ddb30064
+2026-Sep-15 19:47:52.376  Processing Process app request: c7e328620cbc25ad22fc084e92491669069bd8f1d2b16eda4c23ef40ddb30064 (type: process)
+2026-Sep-15 19:47:52.390  Executor: Received message: ID=f827910bbabb8a4bba43d3079cf58c0b, Type=0
+2026-Sep-15 19:47:52.399  Executor: Processing request c7e328620cbc25ad22fc084e92491669069bd8f1d2b16eda4c23ef40ddb30064 for application 7335106231336828932
+2026-Sep-15 19:47:52.399  Executor: Successfully decrypted application state
+2026-Sep-15 19:47:52.403  Wasmtime Runtime: Processing deposit for application 7335106231336828932 (token: 0x0000000000000000000000000000000000000000, value: 1000000000000000000 wei for sender: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266)
+2026-Sep-15 19:47:52.417  Wasmtime Runtime: Raw deposit result from WASM: {"state":"eyJhcHBJZCI6NzMzNTEwNjIzMTMzNjgyODkzMiwiYWNjb3VudHMiOnsiMHhmMzlmZDZlNTFhYWQ4OGY2ZjRjZTZhYjg4MjcyNzljZmZmYjkyMjY2Ijp7ImFkZHJlc3MiOiIweGYzOWZkNmU1MWFhZDg4ZjZmNGNlNmFiODgyNzI3OWNmZmZiOTIyNjYiLCJiYWxhbmNlcyI6eyIweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiOiIweGRlMGI2YjNhNzY0MDAwMCJ9fX0sImFsbG93ZWRUb2tlbnMiOnsiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwIjp0cnVlfSwibm9uY2UiOjEsInRyYW5zYWN0aW9ucyI6W3sidHlwZSI6ImRlcG9zaXQiLCJmcm9tIjoiMHhmMzlmZDZlNTFhYWQ4OGY2ZjRjZTZhYjg4MjcyNzljZmZmYjkyMjY2IiwidG8iOiIweGYzOWZkNmU1MWFhZDg4ZjZmNGNlNmFiODgyNzI3OWNmZmZiOTIyNjYiLCJ0b2tlbkFkZHJlc3MiOiIweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLCJhbW91bnQiOiIweGRlMGI2YjNhNzY0MDAwMCIsIm5vbmNlIjoxLCJ0aW1lc3RhbXAiOjE3ODk1MDE2NzJ9XX0=","events":[{"userId":"0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266","eventSubType":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"data":"eyJ0eXBlIjoiZGVwb3NpdCIsInRva2VuQWRkcmVzcyI6IjB4MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsImFtb3VudCI6IjB4ZGUwYjZiM2E3NjQwMDAwIiwiYmFsYW5jZSI6IjB4ZGUwYjZiM2E3NjQwMDAwIiwibm9uY2UiOjF9"}],"appEvents":null,"fuel":"0x23"}
+2026-Sep-15 19:47:52.417  Wasmtime Runtime: Successfully processed deposit for sender 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266, generated 1 events
+2026-Sep-15 19:47:52.417  Executor: Successfully processed deposit for request c7e328620cbc25ad22fc084e92491669069bd8f1d2b16eda4c23ef40ddb30064
+2026-Sep-15 19:47:52.417  Wasmtime Runtime: Processing request for application 7335106231336828932 (type: process, payload size: 0, state size: 560)
+2026-Sep-15 19:47:52.417  Wasmtime Runtime: Empty payload for application 7335106231336828932, returning current state
+2026-Sep-15 19:47:52.417  Executor: Successfully processed request c7e328620cbc25ad22fc084e92491669069bd8f1d2b16eda4c23ef40ddb30064
+2026-Sep-15 19:47:52.420  Executor: Successfully encrypted 1 events
+2026-Sep-15 19:47:52.420  Executor: Successfully encrypted new application data
+2026-Sep-15 19:47:52.420  Executor: Successfully processed request c7e328620cbc25ad22fc084e92491669069bd8f1d2b16eda4c23ef40ddb30064
+2026-Sep-15 19:47:52.420  Executor: ProcessRequest handled successfully, ID=f827910bbabb8a4bba43d3079cf58c0b
+2026-Sep-15 19:47:52.420  Manager: Received message: ID=f827910bbabb8a4bba43d3079cf58c0b, Type=1
+2026-Sep-15 19:47:52.420  Storing app state, versionID 12874b73640cef0a92986d004d79cd5d7dad0248c50a2612f74a48d807fb4396
+2026-Sep-15 19:47:53.433  Manager: Processed request c7e328620cbc25ad22fc084e92491669069bd8f1d2b16eda4c23ef40ddb30064 for application 7335106231336828932
+2026-Sep-15 19:47:53.433  Manager: Processed request c7e328620cbc25ad22fc084e92491669069bd8f1d2b16eda4c23ef40ddb30064
+2026-Sep-15 19:48:42.379  Manager: processing request 516d5df26f9c1bbc009149eb5a6ad2c82b78f932d471a9d450d3abc0dfac9877
+2026-Sep-15 19:48:42.380  Processing Process app request: 516d5df26f9c1bbc009149eb5a6ad2c82b78f932d471a9d450d3abc0dfac9877 (type: process)
+2026-Sep-15 19:48:42.394  Executor: Received message: ID=afd66c96b54f4920167e3aaacde20232, Type=0
+2026-Sep-15 19:48:42.407  Executor: Processing request 516d5df26f9c1bbc009149eb5a6ad2c82b78f932d471a9d450d3abc0dfac9877 for application 7335106231336828932
+2026-Sep-15 19:48:42.408  Executor: Successfully decrypted application state
+2026-Sep-15 19:48:42.412  Executor: Successfully decrypted request payload
+2026-Sep-15 19:48:42.412  Wasmtime Runtime: Processing request for application 7335106231336828932 (type: process, payload size: 201, state size: 560)
+2026-Sep-15 19:48:42.418  Wasmtime Runtime: Successfully processed request for application 7335106231336828932, generated 2 events and 0 withdrawals
+2026-Sep-15 19:48:42.419  Executor: Successfully processed request 516d5df26f9c1bbc009149eb5a6ad2c82b78f932d471a9d450d3abc0dfac9877
+2026-Sep-15 19:48:42.420  Executor: Returning signed error payload for request 516d5df26f9c1bbc009149eb5a6ad2c82b78f932d471a9d450d3abc0dfac9877 (error code: 9)
+2026-Sep-15 19:48:42.421  Executor: ProcessRequest handled successfully, ID=afd66c96b54f4920167e3aaacde20232
+2026-Sep-15 19:48:42.421  Manager: Received message: ID=afd66c96b54f4920167e3aaacde20232, Type=1
+2026-Sep-15 19:48:42.421  Manager: Received signed error payload for request 516d5df26f9c1bbc009149eb5a6ad2c82b78f932d471a9d450d3abc0dfac9877 (error code: 9)
+2026-Sep-15 19:48:43.431  Manager: Processed request 516d5df26f9c1bbc009149eb5a6ad2c82b78f932d471a9d450d3abc0dfac9877 for application 7335106231336828932
+2026-Sep-15 19:48:43.431  Manager: Processed request 516d5df26f9c1bbc009149eb5a6ad2c82b78f932d471a9d450d3abc0dfac9877
+2026-Sep-15 19:50:07.369  Manager: processing request effd793dfdbc4d445c865cd58486c3bac3a56d6145e48efc93ba51804f5c7362
+2026-Sep-15 19:50:07.370  Processing Process app request: effd793dfdbc4d445c865cd58486c3bac3a56d6145e48efc93ba51804f5c7362 (type: deanonymize)
+2026-Sep-15 19:50:07.397  Executor: Received message: ID=f743cfd93e766226b2e07934cdee7d57, Type=0
+2026-Sep-15 19:50:07.407  Executor: Processing request effd793dfdbc4d445c865cd58486c3bac3a56d6145e48efc93ba51804f5c7362 for application 7335106231336828932
+2026-Sep-15 19:50:07.407  Executor: Successfully decrypted application state
+2026-Sep-15 19:50:07.412  Executor: Successfully decrypted request payload
+2026-Sep-15 19:50:07.412  Wasmtime Runtime: Processing request for application 7335106231336828932 (type: deanonymize, payload size: 107, state size: 560)
+2026-Sep-15 19:50:07.413  Wasmtime Runtime: Successfully processed request for application 7335106231336828932, generated 0 events and 0 withdrawals
+2026-Sep-15 19:50:07.413  Executor: Successfully processed request effd793dfdbc4d445c865cd58486c3bac3a56d6145e48efc93ba51804f5c7362
+2026-Sep-15 19:50:07.413  Executor: Successfully encrypted new application data
+2026-Sep-15 19:50:07.416  Executor: Successfully encrypted deanonymization report
+2026-Sep-15 19:50:07.416  Executor: Successfully generated deanonymization report effd793dfdbc4d445c865cd58486c3bac3a56d6145e48efc93ba51804f5c7362
+2026-Sep-15 19:50:07.416  Executor: Successfully processed request effd793dfdbc4d445c865cd58486c3bac3a56d6145e48efc93ba51804f5c7362
+2026-Sep-15 19:50:07.416  Executor: ProcessRequest handled successfully, ID=f743cfd93e766226b2e07934cdee7d57
+2026-Sep-15 19:50:07.416  Manager: Received message: ID=f743cfd93e766226b2e07934cdee7d57, Type=1
+2026-Sep-15 19:50:07.417  Manager: Saved deanonymization report effd793dfdbc4d445c865cd58486c3bac3a56d6145e48efc93ba51804f5c7362 for application 7335106231336828932
+2026-Sep-15 19:50:07.417  Storing app state, versionID 6a22161aeb052d1659b40376232912911d5e0e58ff5f0f3e44c870dceb800757
+2026-Sep-15 19:50:08.431  Manager: Processed request effd793dfdbc4d445c865cd58486c3bac3a56d6145e48efc93ba51804f5c7362 for application 7335106231336828932
+2026-Sep-15 19:50:08.432  Manager: Processed request effd793dfdbc4d445c865cd58486c3bac3a56d6145e48efc93ba51804f5c7362
+2026-Sep-15 20:14:39.396  Received shutdown signal. Shutting down gracefully...
+2026-Sep-15 20:14:39.397  Manager: Error accepting connection: accept tcp [::]:4002: use of closed network connection
+2026-Sep-15 20:14:39.397  Manager: Read error, closing connection: read tcp 10.10.40.20:47756->10.10.40.10:4000: use of closed network connection
+2026-Sep-15 20:14:39.397  Executor: Connection closed gracefully.
+2026-Sep-15 20:14:39.399  Manager stopped
