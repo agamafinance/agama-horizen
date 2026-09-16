@@ -113,7 +113,7 @@
       <tbody>
         <tr><td><code>zk/</code></td><td><code>book_attest</code> and <code>book_delta</code> <a href="https://noir-lang.org/">Noir</a> circuits, the scenario generator, and the proving script that also runs the backdating attack on every build</td><td><a href="#s4">4</a>, <a href="#s4-4">4.4</a>, <a href="#s5-1">5.1</a></td></tr>
         <tr><td><code>tee/</code></td><td>The full <a href="https://github.com/HorizenOfficial/vela-starterkit">Vela stack</a> we ran locally, the confidential lifecycle we executed on it, and the five findings that took it off our critical path</td><td><a href="#s2-2">2.2</a>, <a href="#s9">9</a></td></tr>
-        <tr><td><code>contracts/</code></td><td>Registry, vault, <code>IRiskSurface</code>, both generated verifiers, and forty-seven tests: fork, adversarial, stateful invariant and zkVerify</td><td><a href="#s5">5</a>, <a href="#s6">6</a>, <a href="#s8-2">8.2</a></td></tr>
+        <tr><td><code>contracts/</code></td><td>Registry, vault, <code>IRiskSurface</code>, both generated verifiers, and forty-nine tests: fork, adversarial, stateful invariant and zkVerify</td><td><a href="#s5">5</a>, <a href="#s6">6</a>, <a href="#s8-2">8.2</a></td></tr>
         <tr><td><code>deployment/</code></td><td>The live Horizen testnet deployment: scripts, addresses, every transaction hash, and a reader that dumps the public surface using only <code>eth_call</code></td><td><a href="#s8-1">8.1</a></td></tr>
       </tbody>
     </table>
@@ -1111,8 +1111,8 @@ if (maxCommittedTs &gt; committedAt) revert LeafBackdated();</code></pre>
 
   <h3 id="s8-2">8.2 Test Suite</h3>
 
-  <p>Forty-seven tests, in <code>contracts/test/</code>. Seven run the disclosure cycle against a
-  live fork of Horizen mainnet, chain 26514. Twenty-three attack the design rather than demonstrate it. Six are stateful invariants
+  <p>Forty-nine tests, in <code>contracts/test/</code>. Seven run the disclosure cycle against a
+  live fork of Horizen mainnet, chain 26514. Twenty-five attack the design rather than demonstrate it. Six are stateful invariants
   driven by randomised traffic, and six cover the zkVerify route, one of them against
   the live aggregation contract on a fork of Base Sepolia.</p>
 

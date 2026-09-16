@@ -265,6 +265,13 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
     ///         are on-chain the moment it is made.
     function requestRedeem(uint256 shares) external nonReentrant returns (uint256 ticketId) {
         if (openTickets >= MAX_QUEUE) revert QueueFull();
+        // MAX_QUEUE bounds tickets that are open, but settle() walks every slot
+        // from `head`, cancelled ones included. Without this second bound a
+        // request-then-cancel loop appends dead slots for ever, using the same
+        // MIN_TICKET of shares each time, until settle() cannot fit in a block
+        // and no depositor can ever leave. Bounding the span settle() has to
+        // walk is what actually keeps the exit open.
+        if (_queue.length - head >= MAX_QUEUE) revert QueueFull();
         uint256 value = convertToAssets(shares);
         if (value < MIN_TICKET) revert TicketTooSmall(value, MIN_TICKET);
         _transfer(msg.sender, address(this), shares);
@@ -323,6 +330,12 @@ contract AgamaCreditVault is ERC4626, AccessControl, ReentrancyGuard {
         queuedShares -= shares;
         --openTickets;
         _transfer(address(this), msg.sender, shares);
+
+        // Retire the slot immediately when it is at the front, so cancelling
+        // does not leave settle() a longer walk than it had before.
+        while (head < _queue.length && _queue[head].shares == 0) {
+            ++head;
+        }
     }
 
     /// @dev Virtual shares at 1e6. The standard ERC-4626 first-depositor attack
