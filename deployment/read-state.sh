@@ -3,8 +3,8 @@
 # No arguments, no keys, no trust in us: it only makes eth_call reads.
 set -euo pipefail
 RPC="${HORIZEN_RPC:-https://horizen-testnet.rpc.caldera.xyz/http}"
-REG="${REGISTRY:-0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B}"
-VAULT="${VAULT:-0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651}"
+REG="${REGISTRY:-0x658A4745c517daa9FA7e221506e5d3f7a352554F}"
+VAULT="${VAULT:-0xa5Af4F297fF72855e778E70701de7f1dd6B8bEc0}"
 
 r() { cast call "$1" "$2" ${3:-} --rpc-url "$RPC" | cut -d' ' -f1; }
 u6() { python3 -c "print('%15.2f'%(int('$1')/1e6))"; }

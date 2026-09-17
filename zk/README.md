@@ -41,8 +41,8 @@ and a proof that succeeds is treated as a build failure rather than a result.
 **The deployed verifiers.** `./prove.sh` regenerates `HonkVerifier.sol` and
 `DeltaVerifier.sol` byte for byte identical to the files committed here, which
 are the contracts deployed and source-verified on Horizen testnet at
-`0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA` and
-`0xA3C1e81Fdadb5bd098546A4B8FBDfe4169436cF4`. That is a complete chain from
+`0x50E753B8060028186d9E090461A9Ff8b6407d1A2` and
+`0x00127EFEfac82972E112D92298CfDB9C5E45A71C`. That is a complete chain from
 circuit source to on-chain bytecode, and `git status` staying clean after a
 build is the check.
 
@@ -52,32 +52,40 @@ and public inputs in `../contracts/test/fixtures/` that the Foundry suite
 consumes. The t0 book root is
 `0x218147fcdc4d96547a204a0fb4b46442f7ff5f2d3811de010e750dc52e3e24e4`.
 
-## Why the roots on-chain are different ones
+## Reproducing the roots that are on-chain
 
-The root published on Horizen testnet is
-`0x0953637ea6121b0789a1e47f6c6112fa265bef67f3ccd8cead5c69a914976a21`, not the
-fixture root, and that is the design rather than a mismatch.
+The roots published on Horizen testnet are not the fixture roots, and that is
+the design rather than a mismatch.
 
-A book root binds its valuation date. The registry will not accept a surface
-whose valuation date is in the future, and will not accept one that predates
-the commitment of its own root, so a live run has to pick a date, commit the
-root while that date is still ahead, wait for it to arrive, and only then
-publish. That is the commit-before-outcome property the whole disclosure
-argument rests on, and it means the live run's roots are a function of the
-wall clock at the moment it ran.
+A book root binds its valuation date. The registry refuses a surface whose
+valuation date is in the future, and refuses one that predates the commitment
+of its own root, so a live run has to pick a date, commit the root while that
+date is still ahead, wait for it to arrive, and only then publish. That is the
+commit-before-outcome property the whole disclosure argument rests on, and it
+makes the live roots a function of the wall clock at the moment the run
+happened.
 
-`gen.py` takes those dates from `AGAMA_AS_OF_0`, `AGAMA_AS_OF_1` and
-`AGAMA_PREV_COMMIT`, which is how [`../deployment/live-testnet.sh`](../deployment/live-testnet.sh)
-drives it. Two of the three are readable back off the chain,
-`bookCommittedAt(root)` and the revision's valuation date, but the first run's
-valuation date was never written down, so those specific roots cannot be
-regenerated after the fact. Later runs record all three in the deployment
-JSON.
+So the run records its clock. [`../deployment/deployment-testnet.json`](../deployment/deployment-testnet.json)
+carries the three values `gen.py` needs, and with them the roots on the chain
+come back exactly:
 
-What this does not weaken: the proof behind the on-chain surface verified
-against the committed root, in the verifier contract, in a transaction anyone
-can open. Reproducing the witness is a convenience. Verifying the proof is the
-guarantee, and that already happened on Horizen.
+```sh
+# the committed book, registry.bookHistory(0)
+AGAMA_AS_OF_0=1789596161 python3 gen.py t0
+(cd book_attest && nargo execute witness_repro)
+# root: 0x2061c7588560ef42fda137aab7b3bd9b5f70de5ab7e0415f8d4d8f9e63290339
+
+# the revision, registry.bookHistory(1)
+AGAMA_AS_OF_0=1789596161 AGAMA_AS_OF_1=1789597022 \
+AGAMA_PREV_COMMIT=1789596089 python3 gen.py t1
+(cd book_attest && nargo execute witness_repro)
+# root: 0x02f297e7780206a658ccd0c33da399b68720cd590bebe93e86423afec5480a8b
+```
+
+Both match what `bookHistory(0)` and `bookHistory(1)` return on chain today.
+Together with the verifiers regenerating byte for byte, that closes the loop:
+circuit source to witness, witness to root, root to the contract that accepted
+it, contract to the bytecode the explorer verified.
 
 ## zkVerify
 

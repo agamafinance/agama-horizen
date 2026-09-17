@@ -247,10 +247,10 @@ end. Not a fork and not a simulation.
 
 | Contract | Address |
 | --- | --- |
-| CreditDisclosureRegistry | `0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B` |
-| AgamaCreditVault | `0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651` |
-| HonkVerifier | `0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA` |
-| DeltaVerifier | `0xA3C1e81Fdadb5bd098546A4B8FBDfe4169436cF4` |
+| CreditDisclosureRegistry | `0x658A4745c517daa9FA7e221506e5d3f7a352554F` |
+| AgamaCreditVault | `0xa5Af4F297fF72855e778E70701de7f1dd6B8bEc0` |
+| HonkVerifier | `0x50E753B8060028186d9E090461A9Ff8b6407d1A2` |
+| DeltaVerifier | `0x00127EFEfac82972E112D92298CfDB9C5E45A71C` |
 
 The cycle that ran on-chain: book committed before any cash moved, vault funded,
 first loss posted, 4.76 M disbursed, risk surface proven and verified, a short
