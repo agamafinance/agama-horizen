@@ -25,7 +25,7 @@ now() { cast block latest --rpc-url "$RPC" --json | python3 -c 'import sys,json;
 send() { # send <label> <to> <sig> [args...]
   local label=$1; shift
   local h
-  h=$(cast send --rpc-url "$RPC" --private-key "$PK" --json "$@" | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d["transactionHash"],int(d["gasUsed"],16))')
+  h=$(cast send --rpc-url "$RPC" --private-key "$PK" --timeout 300 --json "$@" | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d["transactionHash"],int(d["gasUsed"],16))')
   local hash=${h%% *}; local gas=${h##* }
   printf '  %-26s %s  %s gas\n' "$label" "$hash" "$gas" >&2
   echo "| \`$label\` | [\`${hash:0:18}…\`](https://horizen-testnet.explorer.caldera.xyz/tx/$hash) | $gas |" >> "$LOG"

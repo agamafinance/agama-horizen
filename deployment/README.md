@@ -15,11 +15,11 @@ running at these addresses can be read rather than trusted.
 
 | | |
 | --- | --- |
-| Registry | [`0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B`](https://horizen-testnet.explorer.caldera.xyz/address/0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B) |
-| Vault | [`0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651`](https://horizen-testnet.explorer.caldera.xyz/address/0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651) |
-| ZK verifier | [`0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA`](https://horizen-testnet.explorer.caldera.xyz/address/0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA) |
-| Revision verifier | [`0xA3C1e81Fdadb5bd098546A4B8FBDfe4169436cF4`](https://horizen-testnet.explorer.caldera.xyz/address/0xA3C1e81Fdadb5bd098546A4B8FBDfe4169436cF4) |
-| Test USDC | [`0xd0c379C0cD56b62fd9c2fE8913aa261f8096164e`](https://horizen-testnet.explorer.caldera.xyz/address/0xd0c379C0cD56b62fd9c2fE8913aa261f8096164e) |
+| Registry | [`0x658A4745c517daa9FA7e221506e5d3f7a352554F`](https://horizen-testnet.explorer.caldera.xyz/address/0x658A4745c517daa9FA7e221506e5d3f7a352554F) |
+| Vault | [`0xa5Af4F297fF72855e778E70701de7f1dd6B8bEc0`](https://horizen-testnet.explorer.caldera.xyz/address/0xa5Af4F297fF72855e778E70701de7f1dd6B8bEc0) |
+| ZK verifier | [`0x50E753B8060028186d9E090461A9Ff8b6407d1A2`](https://horizen-testnet.explorer.caldera.xyz/address/0x50E753B8060028186d9E090461A9Ff8b6407d1A2) |
+| Revision verifier | [`0x00127EFEfac82972E112D92298CfDB9C5E45A71C`](https://horizen-testnet.explorer.caldera.xyz/address/0x00127EFEfac82972E112D92298CfDB9C5E45A71C) |
+| Test USDC | [`0xbfF7a3dE99131220bB301129c6F8049abec4c524`](https://horizen-testnet.explorer.caldera.xyz/address/0xbfF7a3dE99131220bB301129c6F8049abec4c524) |
 
 | File | What it holds |
 | --- | --- |

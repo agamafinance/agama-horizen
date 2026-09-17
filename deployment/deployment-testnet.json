@@ -1,11 +1,16 @@
 {
-  "testUSDC": "0xd0c379C0cD56b62fd9c2fE8913aa261f8096164e",
-  "honkVerifier": "0xb95B360324edbfd324e19196F6fF3B97E9EaA7dA",
-  "deltaVerifier": "0xA3C1e81Fdadb5bd098546A4B8FBDfe4169436cF4",
-  "registry": "0x6D7C4a153C47841fE0A75C3b0a5298E1a3c9229B",
-  "vault": "0x48db9A42098f8eEc6ff14D771D67cA57f3aB5651",
-  "genesisRoot": "0x02812c7cc03c1027534a5b4d5a75d0c3f8d5f8bdd70848d63eab57a467888a83",
-  "epochGenesis": "1789518394",
+  "testUSDC": "0xbfF7a3dE99131220bB301129c6F8049abec4c524",
+  "honkVerifier": "0x50E753B8060028186d9E090461A9Ff8b6407d1A2",
+  "deltaVerifier": "0x00127EFEfac82972E112D92298CfDB9C5E45A71C",
+  "registry": "0x658A4745c517daa9FA7e221506e5d3f7a352554F",
+  "vault": "0xa5Af4F297fF72855e778E70701de7f1dd6B8bEc0",
+  "genesisRoot": "0x2061c7588560ef42fda137aab7b3bd9b5f70de5ab7e0415f8d4d8f9e63290339",
+  "epochGenesis": "1789595350",
   "chainId": 2651420,
-  "explorer": "https://horizen-testnet.explorer.caldera.xyz"
+  "explorer": "https://horizen-testnet.explorer.caldera.xyz",
+  "reproduce": {
+    "AGAMA_AS_OF_0": "1789596161",
+    "AGAMA_AS_OF_1": "1789597022",
+    "AGAMA_PREV_COMMIT": "1789596089"
+  }
 }
